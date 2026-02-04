@@ -531,7 +531,9 @@ impl TupleVariant {
             Self::string_bool(..) => "(str,bool)".to_string(),
             Self::tuple_i32(tuple, ..) => format!("({},i32)", tuple.ty_str()),
             Self::tuple_string(tuple, ..) => format!("({},str)", tuple.ty_str()),
-            Self::tuple_tuple(tuple0, tuple1) => format!("({},{})", tuple0.ty_str(), tuple1.ty_str()),
+            Self::tuple_tuple(tuple0, tuple1) => {
+                format!("({},{})", tuple0.ty_str(), tuple1.ty_str())
+            }
             Self::tuple_bool(tuple, ..) => format!("({},bool)", tuple.ty_str()),
             Self::bool_i32(..) => "(bool,i32)".to_string(),
             Self::bool_string(..) => "(bool,str)".to_string(),
@@ -544,7 +546,7 @@ impl TupleVariant {
         match self {
             TupleVariant::i32_i32(a, b) => {
                 format!("({},{})", a, b)
-            },
+            }
             TupleVariant::i32_bool(a, b) => {
                 format!("({},{})", a, b)
             }

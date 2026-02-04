@@ -7,7 +7,7 @@ use crate::emitter::tag_handler::get_tag_for;
 use crate::generator::ast::Probe;
 use crate::generator::folding::expr::ExprFolder;
 use crate::generator::folding::stmt::StmtFolder;
-use crate::lang_features::libraries::core::maps::map_adapter::{MapLibAdapter, MAP_LIB_MEM_OFFSET};
+use crate::lang_features::libraries::core::maps::map_adapter::{MAP_LIB_MEM_OFFSET, MapLibAdapter};
 use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use crate::lang_features::libraries::registry::WasmRegistry;
 use crate::parser::types::{

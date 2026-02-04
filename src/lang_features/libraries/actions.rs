@@ -4,8 +4,8 @@ use crate::api::instrument::LibraryLinkStrategy;
 use crate::common::error::ErrorGen;
 use crate::emitter::memory_allocator::MemoryAllocator;
 use crate::generator::ast::Script;
-use crate::lang_features::libraries::core::utils::UtilsPackage;
 use crate::lang_features::libraries::core::LibPackage;
+use crate::lang_features::libraries::core::utils::UtilsPackage;
 use wirm::Module;
 use wirm::ir::id::FunctionID;
 
