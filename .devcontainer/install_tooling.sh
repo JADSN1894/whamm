@@ -106,7 +106,3 @@ CURRENT_VERSION=$(gh --repo "$CURRENT_REPO" release view --json tagName --jq .ta
 # Download only the file named 'cago-component'
 gh --repo "$CURRENT_REPO" release download "$CURRENT_VERSION" --pattern "cargo-component"
 chmod +x cargo-component
-
-chmod +x scripts/01_progress.sh
-chmod +x scripts/02_virgil.sh
-chmod +x scripts/03_wizard-engine.sh
