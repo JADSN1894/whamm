@@ -19,7 +19,7 @@ fn setup_logger() {
 pub fn main() {
     if let Err(e) = try_main() {
         eprintln!("error: {}", e);
-        for c in e.iter_chain().skip(1) {
+        for c in e.chain().skip(1) {
             eprintln!("  caused by {}", c);
         }
         eprintln!("{}", e.backtrace());
@@ -27,7 +27,7 @@ pub fn main() {
     }
 }
 
-fn try_main() -> Result<(), failure::Error> {
+fn try_main() -> anyhow::Result<()> {
     setup_logger();
 
     // Get information from userinstr command line args
