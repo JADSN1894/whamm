@@ -2,7 +2,7 @@ _default:
     just --list
 
 clean:
-    rm -rf progress virgil wizard-engine multi-memory
+    rm -rf progress virgil wizard-engine multi-memory output
 
 progress:
     {{justfile_directory()}}/scripts/01_progress.sh
@@ -23,3 +23,5 @@ build:
     {{justfile_directory()}}/scripts/06_build.sh
 
 setup: clean progress virgil wizard-engine multi-memory
+
+prod: setup build
