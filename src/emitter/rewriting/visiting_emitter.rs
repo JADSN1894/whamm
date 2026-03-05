@@ -1,4 +1,4 @@
-use crate::common::error::{ErrorGen, WhammError};
+use crate::common::error::{ErrorGen, ErrorType, WhammError};
 use crate::emitter::rewriting::rules::{
     LocInfo, MatchState, ProbeRule, StackVal, get_loc_info_for_active_probes, get_ty_info_for_instr,
 };
@@ -455,7 +455,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
             Location::Module { func_idx, .. } | Location::Component { func_idx, .. } => func_idx,
         };
         let orig_ty_id =
-            get_ty_info_for_instr(self.app_iter.module, &fid, self.app_iter.curr_op().unwrap()).2;
+            get_ty_info_for_instr(self.app_iter.module, &fid, self.app_iter.curr_op().unwrap())?.2;
 
         // emit the condition of the `if` expression
         is_success &= self.emit_expr(condition, err);
@@ -464,7 +464,21 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         let block_ty = match orig_ty_id {
             Some(ty_id) => {
                 let ty = match self.app_iter.module.types.get(TypeID(ty_id)) {
-                    Some(ty) => ty.results().clone(),
+                    Some(ty) => ty
+                        .results()
+                        .map_err(|error| {
+                            let error = WhammError {
+                                match_rule: None,
+                                err_loc: None,
+                                info_loc: None,
+                                ty: ErrorType::Error {
+                                    message: Some(error.to_string()),
+                                },
+                            };
+
+                            error
+                        })?
+                        .clone(),
                     None => vec![],
                 };
 
@@ -559,14 +573,19 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         };
 
         // ensure we have the args for this instruction
-        let curr_instr_args =
-            get_ty_info_for_instr(self.app_iter.module, &fid, self.app_iter.curr_op().unwrap()).0;
+        if let Ok(curr_instr_args) =
+            get_ty_info_for_instr(self.app_iter.module, &fid, self.app_iter.curr_op().unwrap())
+        {
+            let curr_instr_args = curr_instr_args.0;
 
-        let num_to_drop = curr_instr_args.len() - self.instr_created_args.len();
-        for _arg in 0..num_to_drop {
-            self.app_iter.drop();
+            let num_to_drop = curr_instr_args.len() - self.instr_created_args.len();
+            for _arg in 0..num_to_drop {
+                self.app_iter.drop();
+            }
+            true
+        } else {
+            false
         }
-        true
     }
 
     fn handle_special_fn_call(
@@ -636,7 +655,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
                 .functions
                 .get_local_fid_by_name("on_exit")
             {
-                let Some(mut on_exit) = self.app_iter.module.functions.get_fn_modifier(fid) else {
+                let Ok(mut on_exit) = self.app_iter.module.functions.get_fn_modifier(fid) else {
                     panic!(
                         "{UNEXPECTED_ERR_MSG} \
                                 No on_exit found in the module!"
@@ -770,6 +789,9 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
                     VisitingEmitter::lookup_pc_offset_for(self.app_iter.module, &loc),
                 ),
             };
+
+            let pc = pc.expect("pc not found");
+
             let fname = self
                 .app_iter
                 .module
@@ -865,7 +887,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         }
     }
 
-    pub fn lookup_pc_offset_for(wasm: &Module, loc: &Location) -> u32 {
+    pub fn lookup_pc_offset_for(wasm: &Module, loc: &Location) -> Result<u32, WhammError> {
         match loc {
             Location::Module {
                 func_idx,
@@ -879,11 +901,12 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
             } =>
             // increment by one to match with Wizard definition (points to right after the opcode)
             {
-                wasm.functions
-                    .unwrap_local(*func_idx)
+                Ok(wasm
+                    .functions
+                    .unwrap_local(*func_idx)?
                     .lookup_pc_offset_for(*instr_idx)
                     .unwrap() as u32
-                    + 1
+                    + 1)
             }
         }
     }

@@ -112,12 +112,19 @@ pub fn link_user_lib(
         Some(table),
     );
 
-    let mut injected_funcs = vec![];
-    for (_, fid) in added.iter() {
-        injected_funcs.push(FunctionID(*fid));
-    }
-
-    injected_funcs
+    // injected_funcs
+    added
+        .iter()
+        .map(|inner| {
+            inner
+                .iter()
+                .map(|(_, fid)| FunctionID(*fid))
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
 }
 
 fn import_lib_memory(app_wasm: &mut Module, loc: &Option<Location>, lib_name: String) -> i32 {
@@ -164,10 +171,11 @@ fn import_lib_package(
         None,
     );
 
-    for (name, fid) in added.iter() {
-        // save the FID
-        package.add_fid_to_adapter(name.as_str(), *fid);
-    }
+    added.iter().for_each(|inner| {
+        inner.iter().for_each(|(name, fid)| {
+            package.add_fid_to_adapter(name.as_str(), *fid);
+        })
+    });
 }
 
 fn import_lib_fn_names(
@@ -178,7 +186,7 @@ fn import_lib_fn_names(
     lib_wasm: &Module,
     lib_fns: &HashSet<String>,
     mut table: Option<&mut SymbolTable>,
-) -> Vec<(String, u32)> {
+) -> Result<Vec<(String, u32)>, wirm::error::Error> {
     let mut injected_fns = vec![];
     for export in lib_wasm.exports.iter() {
         // we don't care about non-function exports
@@ -196,8 +204,8 @@ fn import_lib_fn_names(
                     let fid = import_func(
                         import_name,
                         fn_name,
-                        &ty.params().clone(),
-                        &ty.results().clone(),
+                        &ty.params()?,
+                        &ty.results()?,
                         loc,
                         app_wasm,
                     );
@@ -223,7 +231,7 @@ fn import_lib_fn_names(
             }
         }
     }
-    injected_fns
+    Ok(injected_fns)
 }
 
 fn import_memory(

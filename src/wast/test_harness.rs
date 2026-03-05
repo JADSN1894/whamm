@@ -269,30 +269,29 @@ fn generate_instrumented_bin_wast(
             unreachable!("Shouldn't have had errors!")
         }
 
-        let instrumented_module_wasm = module_to_instrument.encode();
+        if let Ok(instrumented_module_wasm) = module_to_instrument.encode() {
+            try_path(&debug_file_path);
+            if let Err(e) = std::fs::write(&debug_file_path, instrumented_module_wasm.clone()) {
+                unreachable!(
+                    "Failed to dump instrumented wasm to {} from error: {}",
+                    &debug_file_path, e
+                )
+            }
+            wasm2wat_on_file(debug_file_path.as_str());
+            // create the wast
+            // call.wast -> call.idx.bin.wast
+            let new_file_path = new_wast_path(wast_path, idx, None, OUTPUT_WHAMMED_WAST);
 
-        try_path(&debug_file_path);
-        if let Err(e) = std::fs::write(&debug_file_path, instrumented_module_wasm.clone()) {
-            unreachable!(
-                "Failed to dump instrumented wasm to {} from error: {}",
-                &debug_file_path, e
-            )
+            write_bin_wast_file(
+                &new_file_path,
+                &test_setup.support_modules_wat,
+                &test_setup.support_stmts,
+                &instrumented_module_wasm,
+                &test_case.whamm_script,
+                &test_case.assertions,
+            )?;
+            created_wast_files.push(new_file_path);
         }
-        wasm2wat_on_file(debug_file_path.as_str());
-
-        // create the wast
-        // call.wast -> call.idx.bin.wast
-        let new_file_path = new_wast_path(wast_path, idx, None, OUTPUT_WHAMMED_WAST);
-
-        write_bin_wast_file(
-            &new_file_path,
-            &test_setup.support_modules_wat,
-            &test_setup.support_stmts,
-            &instrumented_module_wasm,
-            &test_case.whamm_script,
-            &test_case.assertions,
-        )?;
-        created_wast_files.push(new_file_path);
     }
     Ok(created_wast_files)
 }

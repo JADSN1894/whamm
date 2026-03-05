@@ -564,7 +564,8 @@ impl MemoryAllocator {
                 InitExpr::new(vec![InitInstr::Value(WirmValue::I32(
                     self.curr_mem_offset as i32,
                 ))]),
-            );
+            )
+            .expect("Error: engine buffer should start after the statically used memory");
             ENGINE_BUFFER_MAX_SIZE
         } else {
             // There's no engine buffer!
@@ -577,7 +578,8 @@ impl MemoryAllocator {
             InitExpr::new(vec![InitInstr::Value(WirmValue::I32(
                 self.curr_mem_offset as i32 + buffer_size,
             ))]),
-        );
+        )
+        .expect("Error: memory tracker should point after the engine buffer");
     }
 }
 

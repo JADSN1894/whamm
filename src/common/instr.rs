@@ -1,6 +1,6 @@
 #![allow(clippy::too_many_arguments)]
 use crate::api::instrument::Config;
-use crate::common::error::{ErrorGen, WhammError};
+use crate::common::error::{ErrorGen, ErrorType, WhammError};
 use crate::common::metrics::Metrics;
 use crate::emitter::InjectStrategy;
 use crate::emitter::memory_allocator::MemoryAllocator;
@@ -104,7 +104,20 @@ pub fn dry_run_on_bytes<'a>(
     ) {
         Err(err.pull_errs())
     } else {
-        Ok(target_wasm.pull_side_effects())
+        match target_wasm.pull_side_effects() {
+            Ok(side_effects) => Ok(side_effects),
+            Err(error) => {
+                let error = WhammError {
+                    match_rule: None,
+                    err_loc: None,
+                    info_loc: None,
+                    ty: ErrorType::Error {
+                        message: Some(error.to_string()),
+                    },
+                };
+                Err(vec![error])
+            }
+        }
     }
 }
 
@@ -162,16 +175,35 @@ pub fn run_on_module_and_encode(
         core_lib,
         def_yamls,
         target_wasm,
-        script_path,
+        script_path.clone(),
         user_lib_paths,
         max_errors,
         &mut metrics,
         config,
     )?;
 
-    let wasm = target_wasm.encode();
-    metrics.flush();
-    Ok(wasm)
+    match target_wasm.encode() {
+        Ok(wasm) => {
+            metrics.flush();
+            Ok(wasm)
+        }
+        Err(error) => {
+            let mut err =
+                ErrorGen::new(script_path.clone().to_string(), "".to_string(), max_errors);
+
+            let error = WhammError {
+                match_rule: None,
+                err_loc: None,
+                info_loc: None,
+                ty: ErrorType::Error {
+                    message: Some(error.to_string()),
+                },
+            };
+
+            err.add_error(error);
+            Err(Box::new(err))
+        }
+    }
 }
 
 pub fn run_on_module(
@@ -571,7 +603,7 @@ fn call_instr_init_at_start(
 ) {
     if let Some(instr_init_fid) = module.functions.get_local_fid_by_name("instr_init") {
         if let Some(state_init_id) = state_init_id {
-            if let Some(mut instr_init) = module.functions.get_fn_modifier(instr_init_fid) {
+            if let Ok(mut instr_init) = module.functions.get_fn_modifier(instr_init_fid) {
                 instr_init.call(state_init_id);
             } else {
                 unreachable!("Should have found the function in the module.")
@@ -580,7 +612,7 @@ fn call_instr_init_at_start(
 
         // now call `instr_init` in the module's start function
         let (start_fid, _was_created) = ModuleEmitter::get_or_create_start_func(module);
-        if let Some(mut start_func) = module.functions.get_fn_modifier(FunctionID(start_fid)) {
+        if let Ok(mut start_func) = module.functions.get_fn_modifier(FunctionID(start_fid)) {
             start_func.func_entry();
             start_func.call(instr_init_fid);
 

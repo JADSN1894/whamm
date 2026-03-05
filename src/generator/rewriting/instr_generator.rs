@@ -309,7 +309,8 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l, 'm>
             WirmLocation::Module { func_idx, .. } | WirmLocation::Component { func_idx, .. } => (
                 BytecodeLoc::new(
                     *func_idx,
-                    VisitingEmitter::lookup_pc_offset_for(self.emitter.app_iter.module, &loc),
+                    VisitingEmitter::lookup_pc_offset_for(self.emitter.app_iter.module, &loc)
+                        .expect("Unable to lookup_pc_offset_for u32"),
                 ),
                 *func_idx,
             ),

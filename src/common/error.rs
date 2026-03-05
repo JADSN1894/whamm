@@ -640,6 +640,32 @@ impl From<std::io::Error> for Box<WhammError> {
     }
 }
 
+impl From<wirm::error::Error> for WhammError {
+    fn from(e: wirm::error::Error) -> Self {
+        WhammError {
+            match_rule: None,
+            err_loc: None,
+            info_loc: None,
+            ty: ErrorType::Error {
+                message: Some(e.to_string()),
+            },
+        }
+    }
+}
+
+impl From<std::num::ParseIntError> for WhammError {
+    fn from(e: std::num::ParseIntError) -> Self {
+        WhammError {
+            match_rule: None,
+            err_loc: None,
+            info_loc: None,
+            ty: ErrorType::Error {
+                message: Some(e.to_string()),
+            },
+        }
+    }
+}
+
 pub struct WhammWarning {
     pub match_rule: Option<String>,
     pub ty: WarnType,

@@ -296,7 +296,11 @@ impl SymbolTableBuilder<'_, '_, '_> {
         self.table.set_curr_scope_info(probe_name, ScopeType::Probe);
     }
 
-    fn add_user_lib(&mut self, lib_name: &String, loc: &Option<Location>) {
+    fn add_user_lib(
+        &mut self,
+        lib_name: &String,
+        loc: &Option<Location>,
+    ) -> Result<(), wirm::error::Error> {
         // NOTE -- we don't have a Library scope! This is because the library
         // functions should be globally accessible within the scope of the
         // script. Not having a scope for the Library supports this!
@@ -311,7 +315,7 @@ impl SymbolTableBuilder<'_, '_, '_> {
             // -- should be able to do a normal function call AND type check
             // -- (after looking up the library scope in the table)
             if check_duplicate_id(lib_name, &None, &Definition::User, &self.table, self.err) {
-                return;
+                return Ok(());
             }
 
             let lib_id = self.table.put(
@@ -334,14 +338,16 @@ impl SymbolTableBuilder<'_, '_, '_> {
                 if let ExternalKind::Func = export.kind {
                     let func = lib_module.functions.get(FunctionID(export.index));
                     if let Some(ty) = lib_module.types.get(func.get_type_id()) {
-                        let mut params = vec![];
-                        for p in ty.params().iter() {
-                            params.push(DataType::from_wasm_type(p));
-                        }
-                        let mut results = vec![];
-                        for p in ty.results().iter() {
-                            results.push(DataType::from_wasm_type(p));
-                        }
+                        let params = ty
+                            .params()?
+                            .iter()
+                            .map(|inner| DataType::from_wasm_type(inner))
+                            .collect::<Vec<_>>();
+                        let results = ty
+                            .results()?
+                            .iter()
+                            .map(|inner| DataType::from_wasm_type(inner))
+                            .collect::<Vec<_>>();
                         let fn_name = export.name.clone();
                         let fn_rec = Record::LibFn {
                             name: fn_name.clone(),
@@ -376,6 +382,8 @@ impl SymbolTableBuilder<'_, '_, '_> {
                 loc.clone(),
             );
         }
+
+        Ok(())
     }
 
     fn add_fn(&mut self, f: &mut Fn) {
@@ -898,7 +906,8 @@ impl WhammVisitorMut<()> for SymbolTableBuilder<'_, '_, '_> {
             };
             match stmt {
                 Statement::LibImport { lib_name, loc, .. } => {
-                    self.add_user_lib(lib_name, loc);
+                    self.add_user_lib(lib_name, loc)
+                        .expect("Error: in the global scope! - Statement::LibImport");
                 }
                 Statement::Decl {
                     ty, var_id, loc, ..
