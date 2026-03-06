@@ -607,7 +607,7 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
                     match (ret_ty_conseq, ret_ty_alt) {
                         (None, _) | (_, None) => return None,
                         (Some(DataType::AssumeGood), _) | (_, Some(DataType::AssumeGood)) => {
-                            return Some(DataType::AssumeGood)
+                            return Some(DataType::AssumeGood);
                         }
                         (conseq, _) if conseq == empty_tuple.clone() => return empty_tuple.clone(),
                         (_, alt) if alt == empty_tuple.clone() => return empty_tuple.clone(),
@@ -1044,7 +1044,10 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
                         } else {
                             // unexpected record type
                             // TODO: make this look up the local-most var (overshadowing should work)
-                            unreachable!("{} Expected Var type, got: {rec:?}\nHave you overshadowed some bound variable?", UNEXPECTED_ERR_MSG)
+                            unreachable!(
+                                "{} Expected Var type, got: {rec:?}\nHave you overshadowed some bound variable?",
+                                UNEXPECTED_ERR_MSG
+                            )
                         }
                     }
                 }

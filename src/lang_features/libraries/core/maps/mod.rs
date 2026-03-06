@@ -1,16 +1,16 @@
 pub mod map_adapter;
 
 use crate::common::error::ErrorGen;
-use crate::emitter::memory_allocator::MemoryAllocator;
 use crate::emitter::InjectStrategy;
+use crate::emitter::memory_allocator::MemoryAllocator;
 use crate::generator::ast::{AstVisitor, Metadata, Probe, Script, WhammParam};
 use crate::lang_features::libraries::core::maps::map_adapter::MapLibAdapter;
 use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use crate::lang_features::libraries::core::{LibAdapter, LibPackage};
 use crate::parser::types::{Block, DataType, Expr, Statement};
 use log::debug;
-use wirm::ir::id::FunctionID;
 use wirm::Module;
+use wirm::ir::id::FunctionID;
 
 pub struct MapLibPackage {
     strategy: InjectStrategy,

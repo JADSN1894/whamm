@@ -7,8 +7,8 @@ use crate::emitter::memory_allocator::MemoryAllocator;
 use crate::generator::ast::AstVisitor;
 use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use std::collections::HashMap;
-use wirm::ir::id::FunctionID;
 use wirm::Module;
+use wirm::ir::id::FunctionID;
 
 pub const WHAMM_CORE_LIB_NAME: &str = "whamm_core";
 // TODO: refactor to be more generic!

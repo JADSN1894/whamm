@@ -1,11 +1,11 @@
-use crate::emitter::utils::{emit_expr, EmitCtx};
 use crate::emitter::InjectStrategy;
+use crate::emitter::utils::{EmitCtx, emit_expr};
 use crate::parser::types::{Definition, Expr, Value};
+use wirm::Opcode;
 use wirm::ir::id::LocalID;
 use wirm::ir::types::{BlockType, DataType as WirmType};
 use wirm::module_builder::AddLocal;
 use wirm::opcode::MacroOpcode;
-use wirm::Opcode;
 
 /// See Rust docs: https://doc.rust-lang.org/std/primitive.str.html
 #[derive(Default)]

@@ -1,4 +1,4 @@
-use std::alloc::{alloc, dealloc, Layout};
+use std::alloc::{Layout, alloc, dealloc};
 use std::ptr;
 
 /// Allocates a contiguous region of memory and returns a pointer to it.
@@ -46,7 +46,7 @@ use std::ptr;
 ///
 /// A non-null pointer to `len` bytes of memory on success, or a null
 /// pointer if allocation fails or `len == 0`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn mem_alloc(len: usize) -> *mut u8 {
     if len == 0 {
         return ptr::null_mut();
@@ -102,7 +102,7 @@ pub fn mem_alloc(len: usize) -> *mut u8 {
 /// - Passing a null pointer is a no-op.
 /// - This function must be used instead of `free` or other host
 ///   deallocation functions.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe fn mem_free(ptr: *mut u8) {
     if ptr.is_null() {
         return;

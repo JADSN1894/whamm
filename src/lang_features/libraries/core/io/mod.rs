@@ -8,8 +8,8 @@ use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use crate::lang_features::libraries::core::{LibAdapter, LibPackage};
 use crate::parser::types::{Block, DataType, Expr, Statement};
 use log::debug;
-use wirm::ir::id::FunctionID;
 use wirm::Module;
+use wirm::ir::id::FunctionID;
 
 pub struct IOPackage {
     is_used: bool,

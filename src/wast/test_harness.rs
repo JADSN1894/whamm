@@ -6,7 +6,7 @@ use crate::common::instr::{run, try_path};
 use crate::common::metrics::Metrics;
 use crate::parser::yml_processor::pull_all_yml_files;
 use log::{debug, error};
-use std::fs::{remove_dir_all, File};
+use std::fs::{File, remove_dir_all};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -85,10 +85,13 @@ fn setup(wast_tests: &Vec<PathBuf>) -> Result<(Vec<String>, Vec<String>), std::i
 
 fn run_wast_tests(wast_should_fail: Vec<String>, wast_should_pass: Vec<String>) {
     let inters = get_available_interpreters();
-    assert!(!inters.is_empty(), "No supported interpreters are configured, fail!\n\
+    assert!(
+        !inters.is_empty(),
+        "No supported interpreters are configured, fail!\n\
         To fix, add an executable binary under {INT_PATH} for one of the following interpreter options:\n\
         1. the wizeng interpreter, named '{WIZENG_SPEC_INT}'. https://github.com/titzer/wizard-engine/tree/master\n\
-        2. the Wasm reference interpreter, named '{WASM_REF_INT}'. https://github.com/WebAssembly/spec/tree/main/interpreter\n");
+        2. the Wasm reference interpreter, named '{WASM_REF_INT}'. https://github.com/WebAssembly/spec/tree/main/interpreter\n"
+    );
 
     println!("\n>>> Running wast on the following available interpreters:");
     for (i, (inter, _args)) in inters.iter().enumerate() {
@@ -107,7 +110,9 @@ fn run_wast_tests_that_should_fail(inters: &[(String, Vec<String>)], wast_files:
         for wast in wast_files.iter() {
             let res = run_wast_test(inter, args, wast);
             if res.status.success() {
-                error!("The following command should have FAILED (ran un-instrumented): '{inter} {wast}'");
+                error!(
+                    "The following command should have FAILED (ran un-instrumented): '{inter} {wast}'"
+                );
             }
             assert!(!res.status.success());
         }
@@ -264,30 +269,29 @@ fn generate_instrumented_bin_wast(
             unreachable!("Shouldn't have had errors!")
         }
 
-        let instrumented_module_wasm = module_to_instrument.encode();
+        if let Ok(instrumented_module_wasm) = module_to_instrument.encode() {
+            try_path(&debug_file_path);
+            if let Err(e) = std::fs::write(&debug_file_path, instrumented_module_wasm.clone()) {
+                unreachable!(
+                    "Failed to dump instrumented wasm to {} from error: {}",
+                    &debug_file_path, e
+                )
+            }
+            wasm2wat_on_file(debug_file_path.as_str());
+            // create the wast
+            // call.wast -> call.idx.bin.wast
+            let new_file_path = new_wast_path(wast_path, idx, None, OUTPUT_WHAMMED_WAST);
 
-        try_path(&debug_file_path);
-        if let Err(e) = std::fs::write(&debug_file_path, instrumented_module_wasm.clone()) {
-            unreachable!(
-                "Failed to dump instrumented wasm to {} from error: {}",
-                &debug_file_path, e
-            )
+            write_bin_wast_file(
+                &new_file_path,
+                &test_setup.support_modules_wat,
+                &test_setup.support_stmts,
+                &instrumented_module_wasm,
+                &test_case.whamm_script,
+                &test_case.assertions,
+            )?;
+            created_wast_files.push(new_file_path);
         }
-        wasm2wat_on_file(debug_file_path.as_str());
-
-        // create the wast
-        // call.wast -> call.idx.bin.wast
-        let new_file_path = new_wast_path(wast_path, idx, None, OUTPUT_WHAMMED_WAST);
-
-        write_bin_wast_file(
-            &new_file_path,
-            &test_setup.support_modules_wat,
-            &test_setup.support_stmts,
-            &instrumented_module_wasm,
-            &test_case.whamm_script,
-            &test_case.assertions,
-        )?;
-        created_wast_files.push(new_file_path);
     }
     Ok(created_wast_files)
 }

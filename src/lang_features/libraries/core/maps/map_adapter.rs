@@ -2,8 +2,8 @@
 use crate::common::error::ErrorGen;
 use crate::emitter::memory_allocator::MemoryAllocator;
 use crate::emitter::tag_handler::get_probe_tag_data;
-use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use crate::lang_features::libraries::core::LibAdapter;
+use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use crate::lang_features::report_vars::ReportVars;
 use crate::parser::types::{DataType, Location};
 use std::collections::HashMap;
@@ -473,7 +473,7 @@ impl MapLibAdapter {
         //time to set up the map_init fn
         let init_id = self.get_map_init_fid(app_wasm);
 
-        let Some(mut init_fn) = app_wasm.functions.get_fn_modifier(init_id) else {
+        let Ok(mut init_fn) = app_wasm.functions.get_fn_modifier(init_id) else {
             panic!(
                 "{UNEXPECTED_ERR_MSG} \
                                 No instr_init found in the module!"

@@ -3,8 +3,8 @@ use crate::lang_features::libraries::registry::WasmRegistry;
 use crate::lang_features::type_utils::strings::StringUtils;
 use crate::parser::types::Definition::User;
 use crate::parser::types::{
-    expr_to_value, expr_to_wasm_val, BinOp, DataType, Definition, Expr, Location, NumLit, UnOp,
-    Value,
+    BinOp, DataType, Definition, Expr, Location, NumLit, UnOp, Value, expr_to_value,
+    expr_to_wasm_val,
 };
 use crate::verifier::types::Record::Var;
 use crate::verifier::types::{Record, SymbolTable};

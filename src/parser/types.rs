@@ -4,13 +4,14 @@ use pest::error::LineColLocation;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
+use std::sync::LazyLock;
 use termcolor::Buffer;
 
 use crate::common::error::ErrorGen;
 use crate::common::terminal::{green, grey_italics, magenta, white, yellow};
 use crate::generator::ast::StackReq;
 use crate::parser::provider_handler::{
-    get_matches, BoundVar, Event, Package, Probe, Provider, ProviderDef,
+    BoundVar, Event, Package, Probe, Provider, ProviderDef, get_matches,
 };
 use pest::pratt_parser::PrattParser;
 use pest_derive::Parser;
@@ -21,31 +22,29 @@ use wirm::ir::types::DataType as WirmType;
 #[grammar = "./parser/whamm.pest"] // Path relative to base `src` dir
 pub struct WhammParser;
 
-lazy_static::lazy_static! {
-    pub static ref PRATT_PARSER: PrattParser<Rule> = {
-        use pest::pratt_parser::{Assoc::*, Op};
-        use Rule::*;
+pub static PRATT_PARSER: LazyLock<PrattParser<Rule>> = LazyLock::new(|| {
+    use Rule::*;
+    use pest::pratt_parser::{Assoc::*, Op};
 
-        // Precedence is defined lowest to highest
-        // Follows: https://en.cppreference.com/w/c/language/operator_precedence
-        PrattParser::new()
-            .op(Op::infix(and, Left) | Op::infix(or, Left)) // LOGOP
-            .op(Op::infix(binary_or, Left)) // bitwise OR
-            .op(Op::infix(binary_xor, Left)) // bitwise XOR
-            .op(Op::infix(binary_and, Left)) // bitwise AND
-            .op(Op::infix(eq, Left)                         // RELOP
+    // Precedence is defined lowest to highest
+    // Follows: https://en.cppreference.com/w/c/language/operator_precedence
+    PrattParser::new()
+        .op(Op::infix(and, Left) | Op::infix(or, Left)) // LOGOP
+        .op(Op::infix(binary_or, Left)) // bitwise OR
+        .op(Op::infix(binary_xor, Left)) // bitwise XOR
+        .op(Op::infix(binary_and, Left)) // bitwise AND
+        .op(Op::infix(eq, Left)                         // RELOP
                 | Op::infix(ne, Left)
                 | Op::infix(ge, Left)
                 | Op::infix(gt, Left)
                 | Op::infix(le, Left)
-                | Op::infix(lt, Left)
-            ).op(Op::infix(lshift, Left) | Op::infix(rshift, Left)) // Bitwise left shift and right shift
-            .op(Op::infix(add, Left) | Op::infix(subtract, Left)) // SUMOP
-            .op(Op::infix(multiply, Left) | Op::infix(divide, Left) | Op::infix(modulo, Left)) // MULOP
-            .op(Op::prefix(neg) | Op::prefix(binary_not)) // Logical NOT and bitwise NOT
-            .op(Op::postfix(cast))
-    };
-}
+                | Op::infix(lt, Left))
+        .op(Op::infix(lshift, Left) | Op::infix(rshift, Left)) // Bitwise left shift and right shift
+        .op(Op::infix(add, Left) | Op::infix(subtract, Left)) // SUMOP
+        .op(Op::infix(multiply, Left) | Op::infix(divide, Left) | Op::infix(modulo, Left)) // MULOP
+        .op(Op::prefix(neg) | Op::prefix(binary_not)) // Logical NOT and bitwise NOT
+        .op(Op::postfix(cast))
+});
 
 // ===============
 // ==== Types ====
@@ -1094,11 +1093,7 @@ impl Value {
                             Err(e) => msg = e, // ignore (might be able to cast other indices of the tuple)
                         }
                     }
-                    if !success {
-                        Err(msg)
-                    } else {
-                        Ok(())
-                    }
+                    if !success { Err(msg) } else { Ok(()) }
                 } else {
                     Err(format!("{ty} to {target}"))
                 }

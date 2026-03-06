@@ -1,8 +1,8 @@
 use crate::common::error::ErrorGen;
 use crate::common::instr::ENGINE_BUFFER_MAX_SIZE;
-use crate::emitter::tag_handler::get_tag_for;
-use crate::emitter::utils::{emit_expr, EmitCtx};
 use crate::emitter::InjectStrategy;
+use crate::emitter::tag_handler::get_tag_for;
+use crate::emitter::utils::{EmitCtx, emit_expr};
 use crate::parser::types::{DataType, Expr};
 use crate::verifier::types::{Record, SymbolTable, VarAddr};
 use std::collections::HashMap;
@@ -625,7 +625,8 @@ impl MemoryAllocator {
                 InitExpr::new(vec![InitInstr::Value(WirmValue::I32(
                     self.curr_mem_offset as i32,
                 ))]),
-            );
+            )
+            .expect("Error: engine buffer should start after the statically used memory");
             ENGINE_BUFFER_MAX_SIZE
         } else {
             // There's no engine buffer!
@@ -638,7 +639,8 @@ impl MemoryAllocator {
             InitExpr::new(vec![InitInstr::Value(WirmValue::I32(
                 self.curr_mem_offset as i32 + buffer_size,
             ))]),
-        );
+        )
+        .expect("Error: memory tracker should point after the engine buffer");
     }
 }
 

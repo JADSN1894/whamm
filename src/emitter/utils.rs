@@ -1,20 +1,20 @@
 #![allow(clippy::too_many_arguments)]
 use crate::common::error::ErrorGen;
+use crate::emitter::InjectStrategy;
 use crate::emitter::locals_tracker::LocalsTracker;
 use crate::emitter::memory_allocator::MemoryAllocator;
 use crate::emitter::tag_handler::get_tag_for;
-use crate::emitter::InjectStrategy;
 use crate::generator::ast::Probe;
 use crate::generator::folding::expr::ExprFolder;
 use crate::generator::folding::stmt::StmtFolder;
-use crate::lang_features::libraries::core::maps::map_adapter::{MapLibAdapter, MAP_LIB_MEM_OFFSET};
+use crate::lang_features::libraries::core::maps::map_adapter::{MAP_LIB_MEM_OFFSET, MapLibAdapter};
 use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use crate::lang_features::libraries::registry::WasmRegistry;
 use crate::lang_features::type_utils::strings::StringUtils;
 use crate::parser::types::{
     BinOp, Block, DataType, Definition, Expr, Location, NumLit, Statement, UnOp, Value,
 };
-use crate::verifier::types::{line_col_from_loc, Record, SymbolTable, VarAddr};
+use crate::verifier::types::{Record, SymbolTable, VarAddr, line_col_from_loc};
 use wirm::ir::function::FunctionBuilder;
 use wirm::ir::id::{FunctionID, GlobalID, LocalID};
 use wirm::ir::types::{BlockType, DataType as WirmType, InitExpr, Value as WirmValue};
@@ -723,7 +723,10 @@ fn addr_set<'a, T: Opcode<'a> + MacroOpcode<'a> + AddLocal>(
             injector.local_set(LocalID(*addr));
         }
         VarAddr::MapId { .. } => {
-            unreachable!("This should have been caught during type checking. Attempted to assign a var to Map: {}", name)
+            unreachable!(
+                "This should have been caught during type checking. Attempted to assign a var to Map: {}",
+                name
+            )
         }
     }
 }
@@ -849,8 +852,10 @@ pub(crate) fn emit_expr<'a, T: Opcode<'a> + MacroOpcode<'a> + AddLocal>(
         } => {
             if matches!(ty, DataType::Null) {
                 unreachable!(
-                        "{} \
-                                The result type of the ternary should have been set in the type checker.", ctx.err_msg);
+                    "{} \
+                                The result type of the ternary should have been set in the type checker.",
+                    ctx.err_msg
+                );
             }
 
             emit_if_else(
@@ -954,19 +959,32 @@ pub(crate) fn emit_expr<'a, T: Opcode<'a> + MacroOpcode<'a> + AddLocal>(
             is_success
         }
         Expr::VarId { name, .. } => {
-            let addr = if let Some(Record::Var { addr, def, .. }) =
+            let _addr = if let Some(Record::Var { addr, def, .. }) =
                 ctx.table.lookup_var_mut(name, true)
             {
                 if matches!(def, Definition::CompilerStatic) && addr.is_none() {
-                    unreachable!("{} \
-                    Variable is bound statically by the compiler, it should've been folded by this point: {}", ctx.err_msg,
-                                 name);
+                    unreachable!(
+                        "{} \
+                    Variable is bound statically by the compiler, it should've been folded by this point: {}",
+                        ctx.err_msg, name
+                    );
                 }
                 // this is done to avoid two mutable borrows of `ctx.table`
                 addr.clone()
             } else {
                 unreachable!("unexpected type");
             };
+            // TODO -- support string vars (unimplemented)
+            let Some(Record::Var { addr, def, .. }) = ctx.table.lookup_var_mut(name, true) else {
+                unreachable!("unexpected type");
+            };
+            if matches!(def, Definition::CompilerStatic) && addr.is_none() {
+                unreachable!(
+                    "{} \
+                    Variable is bound statically by the compiler, it should've been folded by this point: {}",
+                    ctx.err_msg, name
+                );
+            }
             // this will be different based on if this is a global or local var
             if let Some(addrs) = addr {
                 let is_success = true;
@@ -2327,7 +2345,10 @@ fn get_map_info(name: &mut str, ctx: &mut EmitCtx) -> Option<(VarAddr, DataType,
             VarAddr::MapId { .. } | VarAddr::Local { .. } | VarAddr::MemLoc { .. }
         ) {
             assert_eq!(addrs.len(), 1);
-            unreachable!("We don't support map locations being stored in addresses other than Local or constant MapId --> {}:{:?}", name, addr)
+            unreachable!(
+                "We don't support map locations being stored in addresses other than Local or constant MapId --> {}:{:?}",
+                name, addr
+            )
         }
         if let DataType::Map {
             key_ty: k,

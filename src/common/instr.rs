@@ -1,23 +1,23 @@
 #![allow(clippy::too_many_arguments)]
 use crate::api::instrument::Config;
-use crate::common::error::{ErrorGen, WhammError};
+use crate::common::error::{ErrorGen, ErrorType, WhammError};
 use crate::common::metrics::Metrics;
+use crate::emitter::InjectStrategy;
 use crate::emitter::memory_allocator::MemoryAllocator;
 use crate::emitter::module_emitter::ModuleEmitter;
 use crate::emitter::rewriting::visiting_emitter::VisitingEmitter;
 use crate::emitter::tag_handler::{get_probe_tag_data, get_tag_for};
-use crate::emitter::InjectStrategy;
 use crate::generator::metadata_collector::MetadataCollector;
 use crate::generator::rewriting::init_generator::InitGenerator;
 use crate::generator::rewriting::instr_generator::InstrGenerator;
 use crate::generator::rewriting::simple_ast::SimpleAST;
 use crate::lang_features::alloc_vars::rewriting::UnsharedVarHandler;
-use crate::lang_features::libraries::core::io::io_adapter::IOAdapter;
 use crate::lang_features::libraries::core::io::IOPackage;
-use crate::lang_features::libraries::core::maps::map_adapter::MapLibAdapter;
+use crate::lang_features::libraries::core::io::io_adapter::IOAdapter;
 use crate::lang_features::libraries::core::maps::MapLibPackage;
-use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
+use crate::lang_features::libraries::core::maps::map_adapter::MapLibAdapter;
 use crate::lang_features::libraries::core::utils::UtilsPackage;
+use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use crate::lang_features::libraries::core::{LibPackage, WHAMM_CORE_LIB_NAME};
 use crate::lang_features::libraries::registry::WasmRegistry;
 use crate::lang_features::report_vars::ReportVars;
@@ -104,7 +104,20 @@ pub fn dry_run_on_bytes<'a>(
     ) {
         Err(err.pull_errs())
     } else {
-        Ok(target_wasm.pull_side_effects())
+        match target_wasm.pull_side_effects() {
+            Ok(side_effects) => Ok(side_effects),
+            Err(error) => {
+                let error = WhammError {
+                    match_rule: None,
+                    err_loc: None,
+                    info_loc: None,
+                    ty: ErrorType::Error {
+                        message: Some(error.to_string()),
+                    },
+                };
+                Err(vec![error])
+            }
+        }
     }
 }
 
@@ -112,7 +125,11 @@ pub fn parse_user_lib_paths(paths: Vec<String>) -> Vec<(String, Option<String>, 
     let mut res = vec![];
     for path in paths.iter() {
         let parts = path.split('=').collect::<Vec<&str>>();
-        assert_eq!(2, parts.len(), "A user lib should be specified using the following format: <lib_name>=/path/to/lib.wasm");
+        assert_eq!(
+            2,
+            parts.len(),
+            "A user lib should be specified using the following format: <lib_name>=/path/to/lib.wasm"
+        );
 
         let lib_name_chunk = parts.first().unwrap().to_string();
         let name_parts = lib_name_chunk.split('(').collect::<Vec<&str>>();
@@ -158,16 +175,35 @@ pub fn run_on_module_and_encode(
         core_lib,
         def_yamls,
         target_wasm,
-        script_path,
+        script_path.clone(),
         user_lib_paths,
         max_errors,
         &mut metrics,
         config,
     )?;
 
-    let wasm = target_wasm.encode();
-    metrics.flush();
-    Ok(wasm)
+    match target_wasm.encode() {
+        Ok(wasm) => {
+            metrics.flush();
+            Ok(wasm)
+        }
+        Err(error) => {
+            let mut err =
+                ErrorGen::new(script_path.clone().to_string(), "".to_string(), max_errors);
+
+            let error = WhammError {
+                match_rule: None,
+                err_loc: None,
+                info_loc: None,
+                ty: ErrorType::Error {
+                    message: Some(error.to_string()),
+                },
+            };
+
+            err.add_error(error);
+            Err(Box::new(err))
+        }
+    }
 }
 
 pub fn run_on_module(
@@ -429,7 +465,7 @@ fn run_instr_wei(
         crate::lang_features::alloc_vars::wei::UnsharedVarHandler::new(target_wasm);
     let mut registry = WasmRegistry::default();
 
-    let mut gen = crate::generator::wei::WeiGenerator {
+    let mut r#gen = crate::generator::wei::WeiGenerator {
         emitter: ModuleEmitter::new(
             InjectStrategy::Wei,
             target_wasm,
@@ -451,7 +487,7 @@ fn run_instr_wei(
         curr_script_id: u8::MAX,
         unshared_var_handler: &mut wei_unshared_var_handler,
     };
-    gen.run(
+    r#gen.run(
         wiz_ast,
         used_funcs,
         used_report_dts,
@@ -548,11 +584,7 @@ fn run_instr_rewrite(
         metrics.end(&match_time);
     }
 
-    if err.has_errors {
-        Err(())
-    } else {
-        Ok(())
-    }
+    if err.has_errors { Err(()) } else { Ok(()) }
 }
 pub fn configure_init_func<'a>(
     init_func: FunctionBuilder<'a>,
@@ -577,7 +609,7 @@ fn call_instr_init_at_start(
 ) {
     if let Some(instr_init_fid) = module.functions.get_local_fid_by_name("instr_init") {
         if let Some(state_init_id) = state_init_id {
-            if let Some(mut instr_init) = module.functions.get_fn_modifier(instr_init_fid) {
+            if let Ok(mut instr_init) = module.functions.get_fn_modifier(instr_init_fid) {
                 instr_init.call(state_init_id);
             } else {
                 unreachable!("Should have found the function in the module.")
@@ -586,7 +618,7 @@ fn call_instr_init_at_start(
 
         // now call `instr_init` in the module's start function
         let (start_fid, _was_created) = ModuleEmitter::get_or_create_start_func(module);
-        if let Some(mut start_func) = module.functions.get_fn_modifier(FunctionID(start_fid)) {
+        if let Ok(mut start_func) = module.functions.get_fn_modifier(FunctionID(start_fid)) {
             start_func.func_entry();
             start_func.call(instr_init_fid);
 

@@ -63,25 +63,25 @@ pub trait MapOperations {
 impl MapOperations for AnyMap {
     fn insert(&mut self, key: Box<dyn Any>, value: Box<dyn Any>) -> bool {
         match self {
-            AnyMap::i32_i32_Map(ref mut map) => {
+            AnyMap::i32_i32_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<i32>(), value.downcast::<i32>()) {
                     map.insert(*key, *value);
                     return true;
                 }
             }
-            AnyMap::i32_string_Map(ref mut map) => {
+            AnyMap::i32_string_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<i32>(), value.downcast::<String>()) {
                     map.insert(*key, *value);
                     return true;
                 }
             }
-            AnyMap::i32_map_Map(ref mut map) => {
+            AnyMap::i32_map_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<i32>(), value.downcast::<AnyMap>()) {
                     map.insert(*key, value);
                     return true;
                 }
             }
-            AnyMap::i32_tuple_Map(ref mut map) => {
+            AnyMap::i32_tuple_Map(map) => {
                 if let (Ok(key), Ok(value)) =
                     (key.downcast::<i32>(), value.downcast::<TupleVariant>())
                 {
@@ -89,33 +89,33 @@ impl MapOperations for AnyMap {
                     return true;
                 }
             }
-            AnyMap::i32_bool_Map(ref mut map) => {
+            AnyMap::i32_bool_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<i32>(), value.downcast::<bool>()) {
                     map.insert(*key, *value);
                     return true;
                 }
             }
-            AnyMap::string_i32_Map(ref mut map) => {
+            AnyMap::string_i32_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<String>(), value.downcast::<i32>()) {
                     map.insert(*key, *value);
                     return true;
                 }
             }
-            AnyMap::string_string_Map(ref mut map) => {
+            AnyMap::string_string_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<String>(), value.downcast::<String>())
                 {
                     map.insert(*key, *value);
                     return true;
                 }
             }
-            AnyMap::string_map_Map(ref mut map) => {
+            AnyMap::string_map_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<String>(), value.downcast::<AnyMap>())
                 {
                     map.insert(*key, value);
                     return true;
                 }
             }
-            AnyMap::string_tuple_Map(ref mut map) => {
+            AnyMap::string_tuple_Map(map) => {
                 if let (Ok(key), Ok(value)) =
                     (key.downcast::<String>(), value.downcast::<TupleVariant>())
                 {
@@ -123,13 +123,13 @@ impl MapOperations for AnyMap {
                     return true;
                 }
             }
-            AnyMap::string_bool_Map(ref mut map) => {
+            AnyMap::string_bool_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<String>(), value.downcast::<bool>()) {
                     map.insert(*key, *value);
                     return true;
                 }
             }
-            AnyMap::tuple_i32_Map(ref mut map) => {
+            AnyMap::tuple_i32_Map(map) => {
                 if let (Ok(key), Ok(value)) =
                     (key.downcast::<TupleVariant>(), value.downcast::<i32>())
                 {
@@ -137,7 +137,7 @@ impl MapOperations for AnyMap {
                     return true;
                 }
             }
-            AnyMap::tuple_string_Map(ref mut map) => {
+            AnyMap::tuple_string_Map(map) => {
                 if let (Ok(key), Ok(value)) =
                     (key.downcast::<TupleVariant>(), value.downcast::<String>())
                 {
@@ -145,7 +145,7 @@ impl MapOperations for AnyMap {
                     return true;
                 }
             }
-            AnyMap::tuple_map_Map(ref mut map) => {
+            AnyMap::tuple_map_Map(map) => {
                 if let (Ok(key), Ok(value)) =
                     (key.downcast::<TupleVariant>(), value.downcast::<AnyMap>())
                 {
@@ -153,7 +153,7 @@ impl MapOperations for AnyMap {
                     return true;
                 }
             }
-            AnyMap::tuple_tuple_Map(ref mut map) => {
+            AnyMap::tuple_tuple_Map(map) => {
                 if let (Ok(key), Ok(value)) = (
                     key.downcast::<TupleVariant>(),
                     value.downcast::<TupleVariant>(),
@@ -162,7 +162,7 @@ impl MapOperations for AnyMap {
                     return true;
                 }
             }
-            AnyMap::tuple_bool_Map(ref mut map) => {
+            AnyMap::tuple_bool_Map(map) => {
                 if let (Ok(key), Ok(value)) =
                     (key.downcast::<TupleVariant>(), value.downcast::<bool>())
                 {
@@ -170,25 +170,25 @@ impl MapOperations for AnyMap {
                     return true;
                 }
             }
-            AnyMap::bool_i32_Map(ref mut map) => {
+            AnyMap::bool_i32_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<bool>(), value.downcast::<i32>()) {
                     map.insert(*key, *value);
                     return true;
                 }
             }
-            AnyMap::bool_string_Map(ref mut map) => {
+            AnyMap::bool_string_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<bool>(), value.downcast::<String>()) {
                     map.insert(*key, *value);
                     return true;
                 }
             }
-            AnyMap::bool_map_Map(ref mut map) => {
+            AnyMap::bool_map_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<bool>(), value.downcast::<AnyMap>()) {
                     map.insert(*key, value);
                     return true;
                 }
             }
-            AnyMap::bool_tuple_Map(ref mut map) => {
+            AnyMap::bool_tuple_Map(map) => {
                 if let (Ok(key), Ok(value)) =
                     (key.downcast::<bool>(), value.downcast::<TupleVariant>())
                 {
@@ -196,7 +196,7 @@ impl MapOperations for AnyMap {
                     return true;
                 }
             }
-            AnyMap::bool_bool_Map(ref mut map) => {
+            AnyMap::bool_bool_Map(map) => {
                 if let (Ok(key), Ok(value)) = (key.downcast::<bool>(), value.downcast::<bool>()) {
                     map.insert(*key, *value);
                     return true;
@@ -208,22 +208,22 @@ impl MapOperations for AnyMap {
     }
     fn get_i32(&self, key: &dyn Any) -> Option<i32> {
         match self {
-            AnyMap::i32_i32_Map(ref map) => {
+            AnyMap::i32_i32_Map(map) => {
                 if let Some(key) = key.downcast_ref::<i32>() {
                     return map.get(key).copied();
                 }
             }
-            AnyMap::string_i32_Map(ref map) => {
+            AnyMap::string_i32_Map(map) => {
                 if let Some(key) = key.downcast_ref::<String>() {
                     return map.get(key).copied();
                 }
             }
-            AnyMap::tuple_i32_Map(ref map) => {
+            AnyMap::tuple_i32_Map(map) => {
                 if let Some(key) = key.downcast_ref::<Box<TupleVariant>>() {
                     return map.get(key).copied();
                 }
             }
-            AnyMap::bool_i32_Map(ref map) => {
+            AnyMap::bool_i32_Map(map) => {
                 if let Some(key) = key.downcast_ref::<bool>() {
                     return map.get(key).copied();
                 }
@@ -234,22 +234,22 @@ impl MapOperations for AnyMap {
     }
     fn get_string(&self, key: &dyn Any) -> Option<String> {
         match self {
-            AnyMap::i32_string_Map(ref map) => {
+            AnyMap::i32_string_Map(map) => {
                 if let Some(key) = key.downcast_ref::<i32>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::string_string_Map(ref map) => {
+            AnyMap::string_string_Map(map) => {
                 if let Some(key) = key.downcast_ref::<String>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::tuple_string_Map(ref map) => {
+            AnyMap::tuple_string_Map(map) => {
                 if let Some(key) = key.downcast_ref::<Box<TupleVariant>>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::bool_string_Map(ref map) => {
+            AnyMap::bool_string_Map(map) => {
                 if let Some(key) = key.downcast_ref::<bool>() {
                     return map.get(key).cloned();
                 }
@@ -260,22 +260,22 @@ impl MapOperations for AnyMap {
     }
     fn get_tuple(&self, key: &dyn Any) -> Option<Box<TupleVariant>> {
         match self {
-            AnyMap::i32_tuple_Map(ref map) => {
+            AnyMap::i32_tuple_Map(map) => {
                 if let Some(key) = key.downcast_ref::<i32>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::string_tuple_Map(ref map) => {
+            AnyMap::string_tuple_Map(map) => {
                 if let Some(key) = key.downcast_ref::<String>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::tuple_tuple_Map(ref map) => {
+            AnyMap::tuple_tuple_Map(map) => {
                 if let Some(key) = key.downcast_ref::<Box<TupleVariant>>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::bool_tuple_Map(ref map) => {
+            AnyMap::bool_tuple_Map(map) => {
                 if let Some(key) = key.downcast_ref::<bool>() {
                     return map.get(key).cloned();
                 }
@@ -286,22 +286,22 @@ impl MapOperations for AnyMap {
     }
     fn get_map_mut(&mut self, key: &dyn Any) -> Option<&mut AnyMap> {
         match self {
-            AnyMap::i32_map_Map(ref mut map) => {
+            AnyMap::i32_map_Map(map) => {
                 if let Some(key) = key.downcast_ref::<i32>() {
                     return map.get_mut(key).map(|box_any_map| &mut **box_any_map);
                 }
             }
-            AnyMap::string_map_Map(ref mut map) => {
+            AnyMap::string_map_Map(map) => {
                 if let Some(key) = key.downcast_ref::<String>() {
                     return map.get_mut(key).map(|box_any_map| &mut **box_any_map);
                 }
             }
-            AnyMap::tuple_map_Map(ref mut map) => {
+            AnyMap::tuple_map_Map(map) => {
                 if let Some(key) = key.downcast_ref::<Box<TupleVariant>>() {
                     return map.get_mut(key).map(|box_any_map| &mut **box_any_map);
                 }
             }
-            AnyMap::bool_map_Map(ref mut map) => {
+            AnyMap::bool_map_Map(map) => {
                 if let Some(key) = key.downcast_ref::<bool>() {
                     return map.get_mut(key).map(|box_any_map| &mut **box_any_map);
                 }
@@ -312,22 +312,22 @@ impl MapOperations for AnyMap {
     }
     fn get_map(&self, key: &dyn Any) -> Option<Box<AnyMap>> {
         match self {
-            AnyMap::i32_map_Map(ref map) => {
+            AnyMap::i32_map_Map(map) => {
                 if let Some(key) = key.downcast_ref::<i32>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::string_map_Map(ref map) => {
+            AnyMap::string_map_Map(map) => {
                 if let Some(key) = key.downcast_ref::<String>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::tuple_map_Map(ref map) => {
+            AnyMap::tuple_map_Map(map) => {
                 if let Some(key) = key.downcast_ref::<Box<TupleVariant>>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::bool_map_Map(ref map) => {
+            AnyMap::bool_map_Map(map) => {
                 if let Some(key) = key.downcast_ref::<bool>() {
                     return map.get(key).cloned();
                 }
@@ -339,22 +339,22 @@ impl MapOperations for AnyMap {
 
     fn get_bool(&self, key: &dyn Any) -> Option<bool> {
         match self {
-            AnyMap::i32_bool_Map(ref map) => {
+            AnyMap::i32_bool_Map(map) => {
                 if let Some(key) = key.downcast_ref::<i32>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::string_bool_Map(ref map) => {
+            AnyMap::string_bool_Map(map) => {
                 if let Some(key) = key.downcast_ref::<String>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::tuple_bool_Map(ref map) => {
+            AnyMap::tuple_bool_Map(map) => {
                 if let Some(key) = key.downcast_ref::<Box<TupleVariant>>() {
                     return map.get(key).cloned();
                 }
             }
-            AnyMap::bool_bool_Map(ref map) => {
+            AnyMap::bool_bool_Map(map) => {
                 if let Some(key) = key.downcast_ref::<bool>() {
                     return map.get(key).cloned();
                 }
@@ -367,7 +367,7 @@ impl MapOperations for AnyMap {
         let mut result = String::new();
 
         match self {
-            AnyMap::i32_i32_Map(ref map) => {
+            AnyMap::i32_i32_Map(map) => {
                 if map.is_empty() {
                     return "empty map".to_string();
                 }
@@ -380,7 +380,7 @@ impl MapOperations for AnyMap {
                 }
                 result.pop();
             }
-            AnyMap::tuple_i32_Map(ref map) => {
+            AnyMap::tuple_i32_Map(map) => {
                 if map.is_empty() {
                     return "empty map".to_string();
                 }
@@ -392,7 +392,7 @@ impl MapOperations for AnyMap {
                 }
                 result.pop();
             }
-            AnyMap::i32_string_Map(ref map) => {
+            AnyMap::i32_string_Map(map) => {
                 if map.is_empty() {
                     return "empty map".to_string();
                 }
@@ -404,7 +404,7 @@ impl MapOperations for AnyMap {
                 }
                 result.pop();
             }
-            AnyMap::string_i32_Map(ref map) => {
+            AnyMap::string_i32_Map(map) => {
                 if map.is_empty() {
                     return "empty map".to_string();
                 }
@@ -425,7 +425,7 @@ impl MapOperations for AnyMap {
         result += &format!("== map{my_id} CSV FLUSH ==\n");
 
         match self {
-            AnyMap::i32_i32_Map(ref map) => {
+            AnyMap::i32_i32_Map(map) => {
                 result += "key (i32), val (i32)\n";
                 if map.is_empty() {
                     result += "empty map\n";
@@ -438,7 +438,7 @@ impl MapOperations for AnyMap {
                     result.push_str(&format!("{}, {}\n", key, value));
                 }
             }
-            AnyMap::tuple_i32_Map(ref map) => {
+            AnyMap::tuple_i32_Map(map) => {
                 if map.is_empty() {
                     result += "empty map\n";
                     return result;
@@ -456,7 +456,7 @@ impl MapOperations for AnyMap {
                     result.push_str(&format!("{}, {}\n", key.dump_tuple(), value));
                 }
             }
-            AnyMap::i32_string_Map(ref map) => {
+            AnyMap::i32_string_Map(map) => {
                 result += "key (i32), val (str)\n";
                 if map.is_empty() {
                     result += "empty map\n";
@@ -469,7 +469,7 @@ impl MapOperations for AnyMap {
                     result.push_str(&format!("{}, {}\n", key, value));
                 }
             }
-            AnyMap::string_i32_Map(ref map) => {
+            AnyMap::string_i32_Map(map) => {
                 result += "key (str), val (i32)\n";
                 if map.is_empty() {
                     result += "empty map\n";
@@ -809,176 +809,176 @@ fn create_map_internal(id: Option<i32>, map: AnyMap) -> i32 {
     binding.insert(id, map);
     id
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_i32_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::i32_i32_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_i32() -> i32 {
     create_map_internal(None, AnyMap::i32_i32_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_bool_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::i32_bool_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_bool() -> i32 {
     create_map_internal(None, AnyMap::i32_bool_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_string_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::i32_string_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_string() -> i32 {
     create_map_internal(None, AnyMap::i32_string_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_tuple_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::i32_tuple_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_tuple() -> i32 {
     create_map_internal(None, AnyMap::i32_tuple_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_map_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::i32_map_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_i32_map() -> i32 {
     create_map_internal(None, AnyMap::i32_map_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_i32_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::string_i32_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_i32() -> i32 {
     create_map_internal(None, AnyMap::string_i32_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_bool_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::string_bool_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_bool() -> i32 {
     create_map_internal(None, AnyMap::string_bool_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_string_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::string_string_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_string() -> i32 {
     create_map_internal(None, AnyMap::string_string_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_tuple_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::string_tuple_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_tuple() -> i32 {
     create_map_internal(None, AnyMap::string_tuple_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_map_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::string_map_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_string_map() -> i32 {
     create_map_internal(None, AnyMap::string_map_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_i32_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::bool_i32_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_i32() -> i32 {
     create_map_internal(None, AnyMap::bool_i32_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_bool_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::bool_bool_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_bool() -> i32 {
     create_map_internal(None, AnyMap::bool_bool_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_string_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::bool_string_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_string() -> i32 {
     create_map_internal(None, AnyMap::bool_string_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_tuple_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::bool_tuple_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_tuple() -> i32 {
     create_map_internal(None, AnyMap::bool_tuple_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_map_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::bool_map_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_bool_map() -> i32 {
     create_map_internal(None, AnyMap::bool_map_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_i32_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::tuple_i32_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_i32() -> i32 {
     create_map_internal(None, AnyMap::tuple_i32_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_bool_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::tuple_bool_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_bool() -> i32 {
     create_map_internal(None, AnyMap::tuple_bool_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_string_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::tuple_string_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_string() -> i32 {
     create_map_internal(None, AnyMap::tuple_string_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_tuple_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::tuple_tuple_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_tuple() -> i32 {
     create_map_internal(None, AnyMap::tuple_tuple_Map(HashMap::new()))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_map_with_id(id: i32) {
     create_map_internal(Some(id), AnyMap::tuple_map_Map(HashMap::new()));
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn create_tuple_map() -> i32 {
     create_map_internal(None, AnyMap::tuple_map_Map(HashMap::new()))
 }
 
 // INSERT
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn insert_i32_i32(id: i32, key: i32, value: i32) {
     if !insert_i32_i32_inner(id, key, value) {
         red(&format!("i32_i32 map DNE: {id}"));
         panic!()
     }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn insert_i32_string(id: i32, key: i32, val_offset: *const u8, val_length: usize) {
     let value = string_from_data(val_offset, val_length);
     debug!("DEBUG: inserting ({key}, \"{value}\") into map '{id}'");
@@ -987,7 +987,7 @@ pub fn insert_i32_string(id: i32, key: i32, val_offset: *const u8, val_length: u
         panic!()
     }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn insert_string_i32(id: i32, key_offset: *const u8, key_length: usize, val: i32) {
     let key = string_from_data(key_offset, key_length);
     if !insert_string_i32_inner(id, key, val) {
@@ -995,21 +995,21 @@ pub fn insert_string_i32(id: i32, key_offset: *const u8, key_length: usize, val:
         panic!()
     }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn insert_i32i32tuple_i32(id: i32, key0: i32, key1: i32, value: i32) {
     if !insert_tuple_i32_inner(id, TupleVariant::i32_i32(key0, key1), value) {
         red(&format!("i32i32tuple_i32 map DNE: {id}"));
         panic!()
     }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn insert_i32booltuple_i32(id: i32, key0: i32, key1: bool, value: i32) {
     if !insert_tuple_i32_inner(id, TupleVariant::i32_bool(key0, key1), value) {
         red(&format!("i32booltuple_i32 map DNE: {id}"));
         panic!()
     }
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn insert_i32i32i32tuple_i32(id: i32, key0: i32, key1: i32, key2: i32, value: i32) {
     if !insert_tuple_i32_inner(id, TupleVariant::i32_i32_i32(key0, key1, key2), value) {
         red(&format!("i32i32i32tuple_i32 map DNE: {id}"));
@@ -1018,35 +1018,35 @@ pub fn insert_i32i32i32tuple_i32(id: i32, key0: i32, key1: i32, key2: i32, value
 }
 
 // GET
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn get_i32_i32(id: i32, key: i32) -> i32 {
     debug!("getting key '{key}' from map '{id}'");
     get_i32(id, &key)
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn get_i32_string(id: i32, key: i32) -> String {
     get_string(id, &key)
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn get_string_i32(id: i32, key_offset: *const u8, key_length: usize) -> i32 {
     let key = string_from_data(key_offset, key_length);
     get_i32(id, &key)
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn get_i32i32tuple_i32(id: i32, key0: i32, key1: i32) -> i32 {
     get_i32(id, &Box::new(TupleVariant::i32_i32(key0, key1)))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn get_i32booltuple_i32(id: i32, key0: i32, key1: bool) -> i32 {
     get_i32(id, &Box::new(TupleVariant::i32_bool(key0, key1)))
 }
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn get_i32i32i32tuple_i32(id: i32, key0: i32, key1: i32, key2: i32) -> i32 {
     get_i32(id, &Box::new(TupleVariant::i32_i32_i32(key0, key1, key2)))
 }
 
 // PRINT
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn print_map(id: i32) {
     let binding = MY_MAPS.lock().unwrap();
 
@@ -1061,7 +1061,7 @@ pub fn print_map(id: i32) {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn print_map_as_csv(id: i32) {
     let binding = MY_MAPS.lock().unwrap();
 

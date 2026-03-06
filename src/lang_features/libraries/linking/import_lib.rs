@@ -4,10 +4,10 @@ use crate::common::error::ErrorGen;
 use crate::emitter::memory_allocator::MemoryAllocator;
 use crate::emitter::tag_handler::get_tag_for;
 use crate::generator::ast::Script;
-use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use crate::lang_features::libraries::core::utils::UtilsPackage;
+use crate::lang_features::libraries::core::utils::utils_adapter::UtilsAdapter;
 use crate::lang_features::libraries::core::{
-    LibPackage, ASSUMED_LIB_MEM_NAME, WHAMM_CORE_LIB_NAME,
+    ASSUMED_LIB_MEM_NAME, LibPackage, WHAMM_CORE_LIB_NAME,
 };
 use crate::parser::types::Location;
 use crate::verifier::types::{Record, SymbolTable};
@@ -129,12 +129,19 @@ pub fn link_user_lib(
         );
     }
 
-    let mut injected_funcs = vec![];
-    for (_, fid) in added.iter() {
-        injected_funcs.push(FunctionID(*fid));
-    }
-
-    injected_funcs
+    // injected_funcs
+    added
+        .iter()
+        .map(|inner| {
+            inner
+                .iter()
+                .map(|(_, fid)| FunctionID(*fid))
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
 }
 
 pub(crate) fn get_lib_mem_name<'a>(lib_wasm: &'a Module) -> &'a str {
@@ -230,10 +237,11 @@ fn import_lib_package(
         None,
     );
 
-    for (name, fid) in added.iter() {
-        // save the FID
-        package.add_fid_to_adapter(name.as_str(), *fid);
-    }
+    added.iter().for_each(|inner| {
+        inner.iter().for_each(|(name, fid)| {
+            package.add_fid_to_adapter(name.as_str(), *fid);
+        })
+    });
 }
 
 fn import_lib_fn_names(
@@ -244,7 +252,7 @@ fn import_lib_fn_names(
     lib_wasm: &Module,
     lib_fns: &HashSet<String>,
     mut table: Option<&mut SymbolTable>,
-) -> Vec<(String, u32)> {
+) -> Result<Vec<(String, u32)>, wirm::error::Error> {
     let mut injected_fns = vec![];
     for export in lib_wasm.exports.iter() {
         // we don't care about non-function exports
@@ -262,8 +270,8 @@ fn import_lib_fn_names(
                     let fid = import_func(
                         import_name,
                         fn_name,
-                        &ty.params().clone(),
-                        &ty.results().clone(),
+                        &ty.params()?,
+                        &ty.results()?,
                         loc,
                         app_wasm,
                     );
@@ -289,7 +297,7 @@ fn import_lib_fn_names(
             }
         }
     }
-    injected_fns
+    Ok(injected_fns)
 }
 
 fn import_memory(

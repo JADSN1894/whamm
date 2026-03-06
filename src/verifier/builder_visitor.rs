@@ -10,9 +10,9 @@ use itertools::Itertools;
 use log::trace;
 use parser_types::{Block, DataType, Expr, Fn, Script, Statement, Value, Whamm};
 use std::collections::{HashMap, HashSet};
+use wirm::Module;
 use wirm::ir::id::FunctionID;
 use wirm::wasmparser::ExternalKind;
-use wirm::Module;
 
 const UNEXPECTED_ERR_MSG: &str = "SymbolTableBuilder: Looks like you've found a bug...please report this behavior! Exiting now...";
 
@@ -233,7 +233,9 @@ impl SymbolTableBuilder<'_, '_, '_> {
                     modes.push(id);
                 }
                 _ => {
-                    unreachable!("{UNEXPECTED_ERR_MSG} Should be able to find the current event in the symbol table.");
+                    unreachable!(
+                        "{UNEXPECTED_ERR_MSG} Should be able to find the current event in the symbol table."
+                    );
                 }
             }
 
@@ -257,7 +259,9 @@ impl SymbolTableBuilder<'_, '_, '_> {
             // need to use this as the probe's scope ID
             probes.len()
         } else {
-            unreachable!("{UNEXPECTED_ERR_MSG} Should be able to find the probe kind in the symbol table (already visited that scope)!");
+            unreachable!(
+                "{UNEXPECTED_ERR_MSG} Should be able to find the probe kind in the symbol table (already visited that scope)!"
+            );
         };
         probe.scope_id = probe_scope_id;
         let probe_name = probe_scope_id.to_string();
@@ -279,7 +283,9 @@ impl SymbolTableBuilder<'_, '_, '_> {
             // add probe to the current mode
             probes.push(id);
         } else {
-            unreachable!("{UNEXPECTED_ERR_MSG} Should be able to find the probe kind in the symbol table (already visited that scope)!");
+            unreachable!(
+                "{UNEXPECTED_ERR_MSG} Should be able to find the probe kind in the symbol table (already visited that scope)!"
+            );
         };
 
         self.curr_probe = Some(id);
@@ -290,7 +296,11 @@ impl SymbolTableBuilder<'_, '_, '_> {
         self.table.set_curr_scope_info(probe_name, ScopeType::Probe);
     }
 
-    fn add_user_lib(&mut self, lib_name: &String, loc: &Option<Location>) {
+    fn add_user_lib(
+        &mut self,
+        lib_name: &String,
+        loc: &Option<Location>,
+    ) -> Result<(), wirm::error::Error> {
         // NOTE -- we don't have a Library scope! This is because the library
         // functions should be globally accessible within the scope of the
         // script. Not having a scope for the Library supports this!
@@ -305,7 +315,7 @@ impl SymbolTableBuilder<'_, '_, '_> {
             // -- should be able to do a normal function call AND type check
             // -- (after looking up the library scope in the table)
             if check_duplicate_id(lib_name, &None, &Definition::User, &self.table, self.err) {
-                return;
+                return Ok(());
             }
 
             let lib_id = self.table.put(
@@ -329,14 +339,16 @@ impl SymbolTableBuilder<'_, '_, '_> {
                 if let ExternalKind::Func = export.kind {
                     let func = lib_module.functions.get(FunctionID(export.index));
                     if let Some(ty) = lib_module.types.get(func.get_type_id()) {
-                        let mut params = vec![];
-                        for p in ty.params().iter() {
-                            params.push(DataType::from_wasm_type(p));
-                        }
-                        let mut results = vec![];
-                        for p in ty.results().iter() {
-                            results.push(DataType::from_wasm_type(p));
-                        }
+                        let params = ty
+                            .params()?
+                            .iter()
+                            .map(|inner| DataType::from_wasm_type(inner))
+                            .collect::<Vec<_>>();
+                        let results = ty
+                            .results()?
+                            .iter()
+                            .map(|inner| DataType::from_wasm_type(inner))
+                            .collect::<Vec<_>>();
                         let fn_name = export.name.clone();
                         let fn_rec = Record::LibFn {
                             name: fn_name.clone(),
@@ -371,6 +383,8 @@ impl SymbolTableBuilder<'_, '_, '_> {
                 loc.clone(),
             );
         }
+
+        Ok(())
     }
 
     fn add_fn(&mut self, f: &mut Fn) {
@@ -405,7 +419,8 @@ impl SymbolTableBuilder<'_, '_, '_> {
                     }
                     //case for curr not having a loc -> shouldn't happen: either user def without a loc or 2 comp def with same name
                     (None, _) => {
-                        unreachable!("No location found for function conflicting with compiler def function. User-def fn has no location, or 2 compiler-def functions with same ID"
+                        unreachable!(
+                            "No location found for function conflicting with compiler def function. User-def fn has no location, or 2 compiler-def functions with same ID"
                         );
                     }
                 }
@@ -941,7 +956,8 @@ impl WhammVisitorMut<()> for SymbolTableBuilder<'_, '_, '_> {
             };
             match stmt {
                 Statement::LibImport { lib_name, loc, .. } => {
-                    self.add_user_lib(lib_name, loc);
+                    self.add_user_lib(lib_name, loc)
+                        .expect("Error: in the global scope! - Statement::LibImport");
                 }
                 Statement::Decl {
                     ty, var_id, loc, ..
