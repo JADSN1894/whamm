@@ -7,5 +7,8 @@ echo "[INFO] Run fmt"
 cargo fmt --all
 cargo fmt --all -- --check
 
+echo "[INFO] Run clippy"
+cargo clippy --all-features --all-targets -- -D warnings
+
 echo "[INFO] Run tests"
-cargo test --verbose -- --nocapture
+cargo test --locked --all-features --verbose

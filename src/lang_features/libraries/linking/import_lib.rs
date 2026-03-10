@@ -193,15 +193,13 @@ fn import_lib_memory(
         }
     } else {
         // memory for this library hasn't been imported yet, fix that!
-        let id = import_memory(
+        import_memory(
             import_module_name,
             ASSUMED_LIB_MEM_NAME,
             &format!("{lib_name}_lib_mem"),
             loc,
             app_wasm,
-        );
-
-        id
+        )
     };
 
     id as i32
@@ -256,44 +254,44 @@ fn import_lib_fn_names(
     let mut injected_fns = vec![];
     for export in lib_wasm.exports.iter() {
         // we don't care about non-function exports
-        if let ExternalKind::Func = export.kind {
-            if lib_fns.contains(&export.name) {
-                let func = lib_wasm.functions.get(FunctionID(export.index));
-                if let Some(ty) = lib_wasm.types.get(func.get_type_id()) {
-                    let import_name = if let Some(name_override) = lib_name_import_override {
-                        name_override.as_str()
-                    } else {
-                        lib_name
-                    };
-                    let fn_name = export.name.as_str();
-
-                    let fid = import_func(
-                        import_name,
-                        fn_name,
-                        &ty.params()?,
-                        &ty.results()?,
-                        loc,
-                        app_wasm,
-                    );
-                    // save the FID to the symbol table
-                    if let Some(table) = table.as_mut() {
-                        let Some(Record::LibFn { addr, .. }) =
-                            table.lookup_lib_fn_mut(lib_name, fn_name)
-                        else {
-                            panic!("unexpected type");
-                        };
-
-                        *addr = Some(fid);
-                    }
-
-                    // save the FID as an injected function
-                    injected_fns.push((export.name.clone(), fid));
+        if let ExternalKind::Func = export.kind
+            && lib_fns.contains(&export.name)
+        {
+            let func = lib_wasm.functions.get(FunctionID(export.index));
+            if let Some(ty) = lib_wasm.types.get(func.get_type_id()) {
+                let import_name = if let Some(name_override) = lib_name_import_override {
+                    name_override.as_str()
                 } else {
-                    unreachable!(
-                        "ImportLib: Could not add function \"{}\" as application import",
-                        export.name
-                    );
+                    lib_name
+                };
+                let fn_name = export.name.as_str();
+
+                let fid = import_func(
+                    import_name,
+                    fn_name,
+                    &ty.params()?,
+                    &ty.results()?,
+                    loc,
+                    app_wasm,
+                );
+                // save the FID to the symbol table
+                if let Some(table) = table.as_mut() {
+                    let Some(Record::LibFn { addr, .. }) =
+                        table.lookup_lib_fn_mut(lib_name, fn_name)
+                    else {
+                        panic!("unexpected type");
+                    };
+
+                    *addr = Some(fid);
                 }
+
+                // save the FID as an injected function
+                injected_fns.push((export.name.clone(), fid));
+            } else {
+                unreachable!(
+                    "ImportLib: Could not add function \"{}\" as application import",
+                    export.name
+                );
             }
         }
     }

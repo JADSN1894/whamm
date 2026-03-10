@@ -267,11 +267,10 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l, 'm>
                         // If the predicate evaluates to false, short-circuit!
                         if let Some(pred_as_bool) =
                             ExprFolder::get_single_bool(pred, self.emitter.registry, false)
+                            && !pred_as_bool
                         {
-                            if !pred_as_bool {
-                                // predicate is reduced to false, short-circuit!
-                                continue;
-                            }
+                            // predicate is reduced to false, short-circuit!
+                            continue;
                         }
                     }
 
@@ -320,11 +319,10 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k, 'l, 'm>
             bytecode_loc: BytecodeLoc { fid: prev_fid, .. },
             ..
         } = self.emitter.report_vars.curr_location
+            && prev_fid != new_fid
         {
-            if prev_fid != new_fid {
-                // we're now visiting a new function! reset the locals!
-                self.emitter.reset_locals_for_function();
-            }
+            // we're now visiting a new function! reset the locals!
+            self.emitter.reset_locals_for_function();
         };
 
         //set the current location in bytecode and load some new globals for potential report vars

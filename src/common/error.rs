@@ -3,7 +3,7 @@ use crate::parser::types::{Location, Rule};
 use pest::error::ErrorVariant::ParsingError;
 use pest::error::{Error, LineColLocation};
 use std::borrow::Cow;
-use std::{cmp, mem};
+use std::cmp;
 use termcolor::{Buffer, BufferWriter, ColorChoice, WriteColor};
 
 const ERR_UNDERLINE_CHAR: char = '^';
@@ -517,10 +517,10 @@ impl CodeLocation {
                 if let Some(script_line) = script.lines().nth(s0_line - 1) {
                     self.line_str = Some(script_line.to_string());
                 }
-                if s0_line != s1_line {
-                    if let Some(script_line) = script.lines().nth(s1_line - 1) {
-                        self.line2_str = Some(script_line.to_string());
-                    }
+                if s0_line != s1_line
+                    && let Some(script_line) = script.lines().nth(s1_line - 1)
+                {
+                    self.line2_str = Some(script_line.to_string());
                 }
             }
         }
@@ -568,7 +568,7 @@ impl CodeLocation {
                 let mut end_inner = *end;
                 let inverted_cols = start_col > end_inner;
                 if inverted_cols {
-                    mem::swap(&mut start_col, &mut end_inner.clone());
+                    start_col = end_inner;
                     start_col -= 1;
                     end_inner += 1;
                 }
@@ -650,6 +650,19 @@ impl From<wirm::error::Error> for WhammError {
                 message: Some(e.to_string()),
             },
         }
+    }
+}
+
+impl From<wirm::error::Error> for Box<WhammError> {
+    fn from(e: wirm::error::Error) -> Self {
+        Box::new(WhammError {
+            match_rule: None,
+            err_loc: None,
+            info_loc: None,
+            ty: ErrorType::Error {
+                message: Some(e.to_string()),
+            },
+        })
     }
 }
 

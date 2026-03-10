@@ -407,18 +407,18 @@ fn emit_assign_stmt<'a, T: Opcode<'a> + MacroOpcode<'a> + AddLocal>(
                     }
                 }
 
-                if let Expr::Primitive { val, .. } = expr {
-                    if is_stable {
-                        *value = Some(val.clone()); // assign the value so we can do folding
+                if let Expr::Primitive { val, .. } = expr
+                    && is_stable
+                {
+                    *value = Some(val.clone()); // assign the value so we can do folding
 
-                        // We can only do this shortcut if the assignment is:
-                        // - stable: only happens once
-                        // - bound to local function state: does not have side effects on program state (memory, globals, etc.)
-                        // - is self-contained in the probe body: cannot interact with the application (e.g. through bound variables)
-                        // TODO: Dynamic string building will break this
-                        if locally_bound && !def.is_comp_defined() {
-                            return true;
-                        }
+                    // We can only do this shortcut if the assignment is:
+                    // - stable: only happens once
+                    // - bound to local function state: does not have side effects on program state (memory, globals, etc.)
+                    // - is self-contained in the probe body: cannot interact with the application (e.g. through bound variables)
+                    // TODO: Dynamic string building will break this
+                    if locally_bound && !def.is_comp_defined() {
+                        return true;
                     }
                 }
 
@@ -675,11 +675,11 @@ fn emit_set<'a, T: Opcode<'a> + MacroOpcode<'a> + AddLocal>(
 
         // this will be different based on if this is a global or local var
         if let Some(addrs) = addr {
-            if let Some(idx) = idx {
-                if let Some(addr) = addrs.get(idx) {
-                    addr_set(addr, None, name, injector, ctx);
-                    return true;
-                }
+            if let Some(idx) = idx
+                && let Some(addr) = addrs.get(idx)
+            {
+                addr_set(addr, None, name, injector, ctx);
+                return true;
             }
 
             for addr in addrs.iter().rev() {

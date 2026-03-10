@@ -58,12 +58,12 @@ impl SymbolTable {
         let mut new_curr_scope = None;
         let mut new_next = None;
         for (i, child_id) in children.iter().enumerate() {
-            if let Some(child_scope) = self.scopes.get_mut(*child_id) {
-                if child_scope.name == scope_name {
-                    new_curr_scope = Some(*child_id);
-                    new_next = Some(i + 1);
-                    child_scope.reset();
-                }
+            if let Some(child_scope) = self.scopes.get_mut(*child_id)
+                && child_scope.name == scope_name
+            {
+                new_curr_scope = Some(*child_id);
+                new_next = Some(i + 1);
+                child_scope.reset();
             }
         }
 
@@ -240,18 +240,18 @@ impl SymbolTable {
         new_rec_id
     }
     pub fn lookup_rec_with_context(&self, key: &str) -> (Option<&Record>, String) {
-        if let (Some(id), _, context) = self.lookup_with_context(key) {
-            if let Some(rec) = self.get_record(id) {
-                return (Some(rec), context);
-            }
+        if let (Some(id), _, context) = self.lookup_with_context(key)
+            && let Some(rec) = self.get_record(id)
+        {
+            return (Some(rec), context);
         }
         (None, "".to_string())
     }
     pub fn lookup_rec(&self, key: &str) -> Option<&Record> {
-        if let Some(id) = self.lookup(key) {
-            if let Some(rec) = self.get_record(id) {
-                return Some(rec);
-            }
+        if let Some(id) = self.lookup(key)
+            && let Some(rec) = self.get_record(id)
+        {
+            return Some(rec);
         }
         None
     }
@@ -388,12 +388,11 @@ impl SymbolTable {
         lib_fn_name: &str,
         fail_on_miss: bool,
     ) -> Option<&Record> {
-        if let Some(Record::Library { fns, .. }) = self.lookup_lib(lib_name, fail_on_miss) {
-            if let Some(rec) = fns.get(lib_fn_name) {
-                if let Some(rec) = self.get_record(*rec) {
-                    return Some(rec);
-                }
-            }
+        if let Some(Record::Library { fns, .. }) = self.lookup_lib(lib_name, fail_on_miss)
+            && let Some(rec) = fns.get(lib_fn_name)
+            && let Some(rec) = self.get_record(*rec)
+        {
+            return Some(rec);
         }
         None
     }

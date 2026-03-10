@@ -167,12 +167,11 @@ impl PartialEq for DataType {
             | (_, DataType::AssumeGood)
             | (DataType::AssumeGood, _) => true,
             (DataType::Tuple { ty_info: ty_info0 }, DataType::Tuple { ty_info: ty_info1 }) => {
-                let res = ty_info0.len() == ty_info1.len()
+                ty_info0.len() == ty_info1.len()
                     && ty_info0
                         .iter()
                         .zip(ty_info1.iter())
-                        .all(|(ty0, ty1)| ty0 == ty1);
-                res
+                        .all(|(ty0, ty1)| ty0 == ty1)
             }
             (
                 DataType::Map {
@@ -2169,10 +2168,10 @@ fn get_loc_with_priority(
 }
 
 fn get_loc(rule_part: &Option<RulePart>) -> Option<Location> {
-    if let Some(part) = &rule_part {
-        if let Some(loc) = part.loc.as_ref() {
-            return Some(loc.clone());
-        }
+    if let Some(part) = &rule_part
+        && let Some(loc) = part.loc.as_ref()
+    {
+        return Some(loc.clone());
     }
     None
 }

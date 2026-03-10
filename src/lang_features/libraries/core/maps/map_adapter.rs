@@ -325,8 +325,7 @@ impl MapLibAdapter {
                         inner += Self::ty_to_str(is_create, inner_ty, err).as_str();
                     }
                     inner += "tuple";
-                    let str = inner.as_str();
-                    str
+                    inner.as_str()
                 }
             }
             DataType::Map { .. } => "map",

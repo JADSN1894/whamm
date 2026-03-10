@@ -326,10 +326,10 @@ pub struct WhammParam {
 }
 impl WhammParam {
     pub fn n_for(&self, prefix: &str) -> Option<u32> {
-        if self.name.starts_with(prefix) {
-            if let Ok(n) = self.name[prefix.len()..].parse::<u32>() {
-                return Some(n);
-            }
+        if self.name.starts_with(prefix)
+            && let Ok(n) = self.name[prefix.len()..].parse::<u32>()
+        {
+            return Some(n);
         }
         None
     }
