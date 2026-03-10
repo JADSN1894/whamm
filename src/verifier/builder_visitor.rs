@@ -342,12 +342,12 @@ impl SymbolTableBuilder<'_, '_, '_> {
                         let params = ty
                             .params()?
                             .iter()
-                            .map(|inner| DataType::from_wasm_type(inner))
+                            .map(DataType::from_wasm_type)
                             .collect::<Vec<_>>();
                         let results = ty
                             .results()?
                             .iter()
-                            .map(|inner| DataType::from_wasm_type(inner))
+                            .map(DataType::from_wasm_type)
                             .collect::<Vec<_>>();
                         let fn_name = export.name.clone();
                         let fn_rec = Record::LibFn {

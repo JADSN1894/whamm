@@ -604,14 +604,14 @@ impl MemoryAllocator {
 
     pub(crate) fn memory_grow(&mut self, wasm: &mut Module) {
         // If we've allocated any memory, bump the app's memory up to account for that
-        if !self.emitted_strings.is_empty() {
-            if let Some(mem) = wasm.memories.get_mut(MemoryID(self.mem_id)) {
-                let req_pages = (((self.curr_mem_offset as i32 + ENGINE_BUFFER_MAX_SIZE) as u32
-                    / WASM_PAGE_SIZE)
-                    + 1) as u64;
-                if mem.ty.initial < req_pages {
-                    mem.ty.initial = req_pages;
-                }
+        if !self.emitted_strings.is_empty()
+            && let Some(mem) = wasm.memories.get_mut(MemoryID(self.mem_id))
+        {
+            let req_pages = (((self.curr_mem_offset as i32 + ENGINE_BUFFER_MAX_SIZE) as u32
+                / WASM_PAGE_SIZE)
+                + 1) as u64;
+            if mem.ty.initial < req_pages {
+                mem.ty.initial = req_pages;
             }
         }
     }

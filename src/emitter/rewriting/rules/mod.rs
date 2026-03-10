@@ -213,7 +213,7 @@ fn handle_opcode_events(
     instr: &Operator,
     event: &String,
     evt: &mut SimpleEvt,
-) -> Result<LocInfo, WhammError> {
+) -> Result<LocInfo, Box<WhammError>> {
     let mut loc_info = LocInfo::new();
 
     loc_info
@@ -271,28 +271,26 @@ fn handle_opcode_events(
             define_imm0::<u32>(*relative_depth, DataType::U32, &Value::gen_u32, &mut loc_info, all_params);
             loc_info.add_probes(probe_rule.clone(), evt, None);
         },
-        "br_table" => if let Operator::BrTable { targets } = instr {
-            bind_vars_br_table(targets, &mut loc_info, all_params)?;
+        "br_table" => if let Operator::BrTable { targets } = instr
+            && bind_vars_br_table(targets, &mut loc_info, all_params).is_some(){
             loc_info.add_probes(probe_rule.clone(), evt, None);
         },
         "return" => if let Operator::Return {..} = instr {
             loc_info.add_probes(probe_rule.clone(), evt, None);
         },
-        "call" => if let Operator::Call {function_index} = instr {
-            if bind_vars_call(&mut loc_info, all_params, *function_index, app_wasm).is_ok() {
+        "call" => if let Operator::Call {function_index} = instr
+            && bind_vars_call(&mut loc_info, all_params, *function_index, app_wasm).is_ok() {
                 loc_info.add_probes(probe_rule.clone(), evt, None);
-            }
-        },
+            },
         "call_indirect" => if let Operator::CallIndirect {type_index,
             table_index,} = instr {
             define_imm0_u32_imm1_u32(*type_index, *table_index, &mut loc_info, all_params);
             loc_info.add_probes(probe_rule.clone(), evt, None);
         },
-        "return_call" => if let Operator::ReturnCall {function_index} = instr {
-            if bind_vars_call(&mut loc_info, all_params, *function_index, app_wasm).is_ok() {
+        "return_call" => if let Operator::ReturnCall {function_index} = instr
+            && bind_vars_call(&mut loc_info, all_params, *function_index, app_wasm).is_ok() {
                 loc_info.add_probes(probe_rule.clone(), evt, None);
-            }
-        },
+            },
         "return_call_indirect" => if let Operator::ReturnCallIndirect {type_index, table_index } = instr {
             define_imm0_u32_imm1_u32(*type_index, *table_index, &mut loc_info, all_params);
             loc_info.add_probes(probe_rule.clone(), evt, None);
@@ -1759,7 +1757,7 @@ fn handle_opcode_events(
         _ => panic!("Event not available: 'wasm:opcode:{event}'"),
     }
 
-    let (all_args, all_results, ..) = get_ty_info_for_instr(app_wasm, fid, instr)?;
+    let (all_args, all_results, ..)  = get_ty_info_for_instr(app_wasm, fid, instr);
 
     // figure out which args are requested based on matched probes
     // (we don't have a match if the requested argument or result is beyond the
@@ -1812,7 +1810,7 @@ fn handle_opcode_events(
                     message: Some("Not loc_info.has_match() || loc_info.is_prog_exit".into()),
                 },
             };
-        Err(error)
+        Err(Box::new(error))
     }
 }
 
@@ -1884,22 +1882,13 @@ fn bind_vars_br_table(
     targets: &BrTable,
     loc_info: &mut LocInfo,
     all_params: &[WhammParam],
-) -> Result<(), WhammError> {
+) -> Option<()> {
     for param in all_params.iter() {
         if let Some(n) = param.n_for("imm") {
             if n > targets.len() {
                 // this location doesn't match since the immN is out of bound
                 // of the immN's available
-
-                let error = WhammError {
-                match_rule: None,
-                err_loc: None,
-                info_loc: None,
-                ty: ErrorType::Error {
-                    message: Some("This location doesn't match since the immN is out of bound of the immN's available".into()),
-                },
-            };
-                return Err(error);
+                return None;
             }
             assert!(matches!(param.ty, DataType::U32));
 
@@ -1909,11 +1898,11 @@ fn bind_vars_br_table(
             }
 
             for (i, target) in targets.targets().enumerate() {
-                if let Ok(target) = target {
-                    if n == i as u32 {
-                        define_imm_n(i as u32, Some(Value::gen_u32(target)), loc_info);
-                        break;
-                    }
+                if let Ok(target) = target
+                    && n == i as u32
+                {
+                    define_imm_n(i as u32, Some(Value::gen_u32(target)), loc_info);
+                    break;
                 }
             }
         } else {
@@ -1942,7 +1931,7 @@ fn bind_vars_br_table(
             };
         }
     }
-    Ok(())
+    Some(())
 }
 
 fn bind_vars_call(
@@ -2053,7 +2042,7 @@ pub fn get_ty_info_for_instr(
     app_wasm: &Module,
     curr_fid: &FunctionID,
     instr: &Operator,
-) -> Result<(Vec<StackVal>, Vec<StackVal>, Option<u32>), WhammError> {
+) -> (Vec<StackVal>, Vec<StackVal>, Option<u32>) {
     // TODO -- how to make this less manual?
     let (arg_list, res_list, ty_id): (Vec<WirmType>, Vec<WirmType>, Option<u32>) = match instr {
         Operator::If { .. } | Operator::BrIf { .. } | Operator::BrTable { .. } => {
@@ -2067,9 +2056,13 @@ pub fn get_ty_info_for_instr(
                 FuncKind::Local(func) => func.ty_id,
             };
             if let Some(ty) = app_wasm.types.get(ty_id) {
-                let args = ty.params()?.into_iter().rev().collect::<Vec<_>>();
-                let results = ty.results()?.into_iter().rev().collect::<Vec<_>>();
-                (args, results, Some(*ty_id))
+                if let (Ok(args), Ok(results)) = (ty.params(), ty.results()) {
+                    let args = args.into_iter().rev().collect::<Vec<_>>();
+                    let results = results.into_iter().rev().collect::<Vec<_>>();
+                    (args, results, Some(*ty_id))
+                } else {
+                    (vec![], vec![], None)
+                }
             } else {
                 // no type info found!!
                 warn!("No type information found for import with FID {fid}");
@@ -2086,9 +2079,13 @@ pub fn get_ty_info_for_instr(
             type_index: ty_id, ..
         } => {
             if let Some(ty) = app_wasm.types.get(TypeID(*ty_id)) {
-                let args = ty.params()?;
-                let results = ty.results()?;
-                (args, results, Some(*ty_id))
+                if let (Ok(args), Ok(results)) = (ty.params(), ty.results()) {
+                    let args = args.into_iter().rev().collect::<Vec<_>>();
+                    let results = results.into_iter().rev().collect::<Vec<_>>();
+                    (args, results, Some(*ty_id))
+                } else {
+                    (vec![], vec![], None)
+                }
             } else {
                 // no type info found!!
                 warn!("No type information found for opcode");
@@ -2493,7 +2490,7 @@ pub fn get_ty_info_for_instr(
         push_val("res", idx, *ty, &mut results);
     });
 
-    Ok((args, results, ty_id))
+    (args, results, ty_id)
 }
 
 fn handle_block(

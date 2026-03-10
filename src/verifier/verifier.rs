@@ -338,13 +338,13 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
         // type check predicate
         if let Some(predicate) = &mut probe.predicate {
             let predicate_loc = predicate.loc().clone().unwrap();
-            if let Some(ty) = self.visit_expr(predicate) {
-                if ty != DataType::Boolean {
-                    self.err.type_check_error(
-                        "Predicate must be of type boolean".to_owned(),
-                        &Some(predicate_loc.line_col),
-                    );
-                }
+            if let Some(ty) = self.visit_expr(predicate)
+                && ty != DataType::Boolean
+            {
+                self.err.type_check_error(
+                    "Predicate must be of type boolean".to_owned(),
+                    &Some(predicate_loc.line_col),
+                );
             }
         }
 
@@ -422,14 +422,14 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
     }
 
     fn visit_stmt(&mut self, stmt: &mut Statement) -> Option<DataType> {
-        if self.in_function {
-            if let Statement::UnsharedDecl { .. } = stmt {
-                self.err.type_check_error(
-                    "Special declarations are not allowed in the functions".to_owned(),
-                    &stmt.loc().clone().map(|l| l.line_col),
-                );
-                return None;
-            }
+        if self.in_function
+            && let Statement::UnsharedDecl { .. } = stmt
+        {
+            self.err.type_check_error(
+                "Special declarations are not allowed in the functions".to_owned(),
+                &stmt.loc().clone().map(|l| l.line_col),
+            );
+            return None;
         }
 
         if self.in_script_global {
@@ -448,10 +448,10 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
                     }
                 }
                 Statement::UnsharedDeclInit { decl, .. } => {
-                    if let Statement::UnsharedDecl { is_report, .. } = **decl {
-                        if is_report {
-                            self.has_reports = true;
-                        }
+                    if let Statement::UnsharedDecl { is_report, .. } = **decl
+                        && is_report
+                    {
+                        self.has_reports = true;
                     }
                 }
                 _ => {
@@ -481,14 +481,13 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
                 let lhs_ty_op = self.visit_expr(var_id);
                 self.restrict_probe_local_state = orig_setting;
 
-                if let Some(lhs_ty) = &lhs_ty_op {
-                    if let Expr::UnOp {
+                if let Some(lhs_ty) = &lhs_ty_op
+                    && let Expr::UnOp {
                         op: UnOp::Cast { target },
                         ..
                     } = expr
-                    {
-                        self.outer_cast_fixes_assign = lhs_ty == target;
-                    }
+                {
+                    self.outer_cast_fixes_assign = lhs_ty == target;
                 }
                 self.assign_ty = lhs_ty_op.clone();
                 let rhs_ty_op = self.visit_expr(expr);
@@ -549,14 +548,14 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
             } => {
                 if let Expr::VarId { name, .. } = var_id {
                     //check that if type is map, key_ty is not a map
-                    if let DataType::Map { key_ty, .. } = ty {
-                        if let DataType::Map { .. } = key_ty.as_ref() {
-                            self.err.type_check_error(
-                                "Map keys cannot be maps".to_owned(),
-                                &loc.clone().map(|l| l.line_col),
-                            );
-                            return None;
-                        }
+                    if let DataType::Map { key_ty, .. } = ty
+                        && let DataType::Map { .. } = key_ty.as_ref()
+                    {
+                        self.err.type_check_error(
+                            "Map keys cannot be maps".to_owned(),
+                            &loc.clone().map(|l| l.line_col),
+                        );
+                        return None;
                     }
                     //check to make sure that that if tuple, doesn't contain a map
                     if let DataType::Tuple { ty_info } = ty {
@@ -1185,8 +1184,8 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
                             return Some(DataType::AssumeGood);
                         }
                     };
-                    let rec = fns
-                        .get(fn_name)
+
+                    fns.get(fn_name)
                         .and_then(|rec| self.table.get_record(*rec))
                         .or_else(|| {
                             self.err.type_check_error(
@@ -1194,8 +1193,7 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
                                 &loc.clone().map(|l| l.line_col),
                             );
                             None
-                        });
-                    rec
+                        })
                 } else {
                     self.table.lookup_fn(fn_name, true)
                 };
@@ -1375,17 +1373,17 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
                 let cond_ty = self.visit_expr(cond);
                 //have to clone before the "if let" block
                 let cond_ty_clone = cond_ty.clone();
-                if let Some(ty) = cond_ty {
-                    if ty != DataType::Boolean {
-                        self.err.type_check_error(
-                            format!(
-                                "Condition must be of type boolean, found {:?}",
-                                cond_ty_clone.unwrap()
-                            )
-                            .to_owned(),
-                            &Some(cond.loc().clone().unwrap().line_col),
-                        );
-                    }
+                if let Some(ty) = cond_ty
+                    && ty != DataType::Boolean
+                {
+                    self.err.type_check_error(
+                        format!(
+                            "Condition must be of type boolean, found {:?}",
+                            cond_ty_clone.unwrap()
+                        )
+                        .to_owned(),
+                        &Some(cond.loc().clone().unwrap().line_col),
+                    );
                 }
 
                 self.assign_ty = saved_exp_ty;
@@ -1434,44 +1432,43 @@ impl WhammVisitorMut<Option<DataType>> for TypeChecker<'_> {
     fn visit_value(&mut self, val: &mut Value) -> Option<DataType> {
         match val {
             Value::Number { .. } | Value::Boolean { .. } => {
-                if !self.outer_cast_fixes_assign {
-                    if let Some(exp_ty) = &self.assign_ty {
-                        let exp_ty = if let DataType::Tuple { ty_info } = exp_ty {
-                            if let Some(ty) = ty_info.get(self.tuple_index) {
-                                ty
-                            } else {
-                                let loc = self.curr_loc.as_ref().map(|loc| loc.line_col.clone());
-                                self.err.type_check_error(
+                if !self.outer_cast_fixes_assign
+                    && let Some(exp_ty) = &self.assign_ty
+                {
+                    let exp_ty = if let DataType::Tuple { ty_info } = exp_ty {
+                        if let Some(ty) = ty_info.get(self.tuple_index) {
+                            ty
+                        } else {
+                            let loc = self.curr_loc.as_ref().map(|loc| loc.line_col.clone());
+                            self.err.type_check_error(
                                     format!(
                                         "TypeError: Tuple value at this location exceeded the expected tuple length of: {}.",
                                         ty_info.len()
                                     ),
                                     &loc,
                                 );
-                                return Some(DataType::AssumeGood);
-                            }
-                        } else {
-                            exp_ty
-                        };
+                            return Some(DataType::AssumeGood);
+                        }
+                    } else {
+                        exp_ty
+                    };
 
-                        let val_ty = val.ty();
-                        return if *exp_ty == val_ty {
-                            Some(val_ty)
-                        } else if exp_ty.can_implicitly_cast() && val_ty.can_implicitly_cast() {
-                            match val.implicit_cast(exp_ty) {
-                                Ok(_) => Some(val.ty()),
-                                Err(msg) => {
-                                    let loc =
-                                        self.curr_loc.as_ref().map(|loc| loc.line_col.clone());
-                                    self.err.type_check_error(format!("CastError: Cannot implicitly cast {msg}. Please add an explicit cast."),
+                    let val_ty = val.ty();
+                    return if *exp_ty == val_ty {
+                        Some(val_ty)
+                    } else if exp_ty.can_implicitly_cast() && val_ty.can_implicitly_cast() {
+                        match val.implicit_cast(exp_ty) {
+                            Ok(_) => Some(val.ty()),
+                            Err(msg) => {
+                                let loc = self.curr_loc.as_ref().map(|loc| loc.line_col.clone());
+                                self.err.type_check_error(format!("CastError: Cannot implicitly cast {msg}. Please add an explicit cast."),
                                                               &loc);
-                                    Some(DataType::AssumeGood)
-                                }
+                                Some(DataType::AssumeGood)
                             }
-                        } else {
-                            Some(DataType::Unknown)
-                        };
-                    }
+                        }
+                    } else {
+                        Some(DataType::Unknown)
+                    };
                 }
                 Some(val.ty())
             }

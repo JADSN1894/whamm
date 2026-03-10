@@ -21,7 +21,7 @@
       "version": "latest",
       "ppa": false
     },
-    "ghcr.io/devcontainers/features/node": {
+    "ghcr.io/devcontainers/features/node:1.7.1": {
       "nodeGypDependencies": false,
       "nvmVersion": "latest",
       "version": "latest",
@@ -43,7 +43,10 @@
         },
         "rust-analyzer.checkOnSave": true,
         "explorer.compactFolders": false,
-        "rust-analyzer.inlayHints.implicitDrops.enable": true
+        "rust-analyzer.inlayHints.implicitDrops.enable": true,
+        "rust-analyzer.check.command": "clippy",
+        "rust-analyzer.check.allTargets": true,
+        "rust-analyzer.check.features": "all"
       },
       "extensions": [
         "ms-azuretools.vscode-docker",
@@ -52,9 +55,7 @@
         "BytecodeAlliance.wit-idl",
         "tamasfe.even-better-toml",
         "vadimcn.vscode-lldb",
-        "skellock.just",
-        "opeolluwa.leptos",
-        "masterustacean.leptos-fmt"
+        "skellock.just"
       ]
     }
   },

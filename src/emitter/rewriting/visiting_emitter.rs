@@ -285,12 +285,12 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
                     else {
                         unreachable!("unexpected type");
                     };
-                    let wasm_ty = if ty.to_wasm_type().len() > 1 {
+
+                    if ty.to_wasm_type().len() > 1 {
                         unimplemented!()
                     } else {
                         *ty.to_wasm_type().first().unwrap()
-                    };
-                    wasm_ty
+                    }
                 };
                 // create local for the result in the module
                 let local_id = LocalID(self.locals_tracker.use_local(ty, &mut self.app_iter));
@@ -466,7 +466,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
             Location::Module { func_idx, .. } | Location::Component { func_idx, .. } => func_idx,
         };
         let orig_ty_id =
-            get_ty_info_for_instr(self.app_iter.module, &fid, self.app_iter.curr_op().unwrap())?.2;
+            get_ty_info_for_instr(self.app_iter.module, &fid, self.app_iter.curr_op().unwrap()).2;
 
         // emit the condition of the `if` expression
         is_success &= self.emit_expr(condition, err);
@@ -477,17 +477,13 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
                 let ty = match self.app_iter.module.types.get(TypeID(ty_id)) {
                     Some(ty) => ty
                         .results()
-                        .map_err(|error| {
-                            let error = WhammError {
-                                match_rule: None,
-                                err_loc: None,
-                                info_loc: None,
-                                ty: ErrorType::Error {
-                                    message: Some(error.to_string()),
-                                },
-                            };
-
-                            error
+                        .map_err(|error| WhammError {
+                            match_rule: None,
+                            err_loc: None,
+                            info_loc: None,
+                            ty: ErrorType::Error {
+                                message: Some(error.to_string()),
+                            },
                         })?
                         .clone(),
                     None => vec![],
@@ -584,19 +580,15 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         };
 
         // ensure we have the args for this instruction
-        if let Ok(curr_instr_args) =
-            get_ty_info_for_instr(self.app_iter.module, &fid, self.app_iter.curr_op().unwrap())
-        {
-            let curr_instr_args = curr_instr_args.0;
 
-            let num_to_drop = curr_instr_args.len() - self.instr_created_args.len();
-            for _arg in 0..num_to_drop {
-                self.app_iter.drop();
-            }
-            true
-        } else {
-            false
+        let curr_instr_args =
+            get_ty_info_for_instr(self.app_iter.module, &fid, self.app_iter.curr_op().unwrap()).0;
+
+        let num_to_drop = curr_instr_args.len() - self.instr_created_args.len();
+        for _arg in 0..num_to_drop {
+            self.app_iter.drop();
         }
+        true
     }
 
     fn handle_write_str(&mut self) -> bool {
@@ -922,7 +914,7 @@ impl<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i, 'j, 'k>
         }
     }
 
-    pub fn lookup_pc_offset_for(wasm: &Module, loc: &Location) -> Result<u32, WhammError> {
+    pub fn lookup_pc_offset_for(wasm: &Module, loc: &Location) -> Result<u32, Box<WhammError>> {
         match loc {
             Location::Module {
                 func_idx,

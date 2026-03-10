@@ -1395,29 +1395,29 @@ fn probe_rule_from_rule(pair: Pair<Rule>, err: &mut ErrorGen) -> ProbeRule {
         };
 
         // check if there is type info associated with this probe part
-        if let Some(n) = next.clone() {
-            if matches!(n.as_rule(), Rule::TY_BOUNDS) {
-                let mut param_pairs = n.into_inner();
+        if let Some(n) = next.clone()
+            && matches!(n.as_rule(), Rule::TY_BOUNDS)
+        {
+            let mut param_pairs = n.into_inner();
 
-                let mut params = vec![];
-                let mut next_param = param_pairs.next();
-                while let Some(n) = &next_param {
-                    if matches!(n.as_rule(), Rule::param) {
-                        if let Some(param) =
-                            handle_param(n.clone().into_inner(), Definition::CompilerDynamic, err)
-                        {
-                            params.push(param)
-                        }
-                        next_param = param_pairs.next();
-                    } else {
-                        break;
+            let mut params = vec![];
+            let mut next_param = param_pairs.next();
+            while let Some(n) = &next_param {
+                if matches!(n.as_rule(), Rule::param) {
+                    if let Some(param) =
+                        handle_param(n.clone().into_inner(), Definition::CompilerDynamic, err)
+                    {
+                        params.push(param)
                     }
+                    next_param = param_pairs.next();
+                } else {
+                    break;
                 }
-
-                // let params = handle_params(&mut parts, err);
-                next = parts.next();
-                rule_part.ty_info = params;
             }
+
+            // let params = handle_params(&mut parts, err);
+            next = parts.next();
+            rule_part.ty_info = params;
         }
         probe_rule.add_rule_def(rule_part);
     }
@@ -1720,10 +1720,10 @@ pub fn handle_float(pair: Pair<Rule>) -> Result<Expr, Vec<WhammError>> {
         let mut res = (NumLit::f32(val), DataType::F32);
         if val.is_infinite() && !token.contains("inf") {
             // try to parse as f64
-            if let Ok(new_val) = f64::from_str(&token) {
-                if !new_val.is_infinite() {
-                    res = (NumLit::f64(new_val), DataType::F64)
-                }
+            if let Ok(new_val) = f64::from_str(&token)
+                && !new_val.is_infinite()
+            {
+                res = (NumLit::f64(new_val), DataType::F64)
             }
         }
         res
